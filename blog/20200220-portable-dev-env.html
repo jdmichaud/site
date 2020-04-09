@@ -1,40 +1,147 @@
 <div>
+  <h3>Portable development environments</h3>
   <p>
-    I've heard, multiple times, that developping software is a creative activity
-    that could be compared to writing music or writing a book. There is truth
-    into that. The mirage of automating software production if far out of reach
-    because the creation of value through software requires a higher level of
-    thinking than just producing lines of codes. If machines were to ever
-    replace humanity, the last human in control will probably be a developer.
-    That being said, the analogy with artist as its limitation. First of all,
-    software development is rarely an ex-nihilo process, especially when being
-    executed professionally. We don't express emotions or visions. We
-    systematize ideas to produce value. Ideas that more often than not, not our
-    own. Secondly, a software is a product that is way more complex than any
-    work of art. It is, most of the time, a collective effort. And it relies on
-    multiple layer of technology and abstractions. The way developer used to
-    work, 50 years ago, producing every bit manually on a manually built
-    computer could be compared with writing a book with a pen and paper. What
-    developers are doing today... not so much.
+    The day-to-day life of a developer is that of a master of tools. Tools to
+    write, compile, link, test, package, distribute. Not unlike heavy machinery
+    which is an extension of the body, those tools are an extension of the mind
+    that allows one person to produce an enormous amount of value with limited
+    effort. But those tools can also be a bane. To install, configure, maintain and
+    most importantly master.
   </p>
   <p>
-    Compiling your software, linting it, testing it, packaging it. All of this
-    relies on a bunch of tools that artist or creative worker do not need to
-    bother with. The day-to-day life of a developer is as a master of tools.
-    Thoses tools, like heavy machinery, are an extension that allows one person
-    to produce an enormous amount of value with limited effort. Those tools can
-    also be a bane. To install, configure, maintain and most importantly
-    master.
-  </p>
-  <p>
+    Since the 80s, as complexity of the development environement grew, no
+    solution was proposed to simplify and streamline the developer's experience.
     When I started my career, in 2005, I joined a team that was still living the
-    90s life. Proprietary source control system, that would require the
+    90s life. Proprietary version control system, that would require the
     intervention of multiple support team to onboard to. Dependencies installed
-    manually from CDs ! A full set of environment variable and software to
+    manually from CDs ! A full set of environment variables and software to
     configure and install. It would takes weeks for a newcomer to have a fully
     working development environment. And very few team members, except the
     oldest, those who've been there from the start, actually knew how all this
     was working.
   </p>
+  <p>
+    But the advent of web technologies brought a wind of change. <tt>npm</tt>,
+    the node package manager, suddenly allowed a developer to explicitely
+    describe, in a simple json file, what are its dependencies and what the
+    projects needs to convert its source code to the final deliverable. The
+    <tt>npm</tt> people were smart enough to split the concept of dependencies
+    between what was needed to generate an artifact (the development
+    dependencies) and what what needed to actually run the software, the
+    dependencies. From now on, a project could specify, in a human readable way,
+    what tools (with their version) and what software factory steps are needed
+    to produce your project artefact and what libraries are needed to use this
+    artifact. This file, called <tt>package.json</tt> was standardized and
+    would be a convention for all web based development project. All those
+    dependencies would be downloaded from a central repository (of course
+    configurable) and you would never ever need to find the CD-Rom or even the
+    web link of the proper version of this or that tool again.
+  </p>
+  <p>
+    Of course, initially the solution was immature. You were still needed to
+    play around with some rough edges (i.e. grunt/gulp) to get your software
+    factory moving but as of today, npm can be fully leveraged to pilot that
+    facotry in a simple and transparent manner.
+  </p>
+  <p>
+    Let's take a simple example. You write a project in typescript. You need to
+    transpile the source to javascript, unit test it and bundle it in a form
+    that can be easily consumed by a browser. You will first create a
+    <tt>package.json</tt> file:
+    <pre>
+        {
+          "name": "my-project",
+        }
+    </pre>
+    That's it, you have a valid <tt>package.json</tt> file. Let's install what's
+    necessary to transpile your project:
+    <pre>
+        $ npm install --save-dev typescript
+    </pre>
+    You instruct <tt>npm</tt> you will need a development dependencies. This
+    development dependencies is necessary to the developer but not to the user
+    of your software. More on this later. Now your <tt>package.json</tt> looks
+    like this (version notwithstanding):
+    <pre>
+        {
+          "name": "my-project",
+          "devDependencies": {
+            "typescript": "^3.9.2"
+          }
+        }
+    </pre>
+    You create a source file:
+    <pre>
+        $ cat > main.ts
+        function main(): void {
+          console.log('Hello world!');
+        }
 
+        window.onload = main;
+    </pre>
+    Now let's configure <tt>npm</tt> to build your project:
+    <pre>
+        {
+          "name": "my-project",
+          "scripts": {
+            "build": "tsc main.ts"
+          },
+          "devDependencies": {
+            "typescript": "^3.9.2"
+          }
+        }
+    </pre>
+    Then build it:
+    <pre>
+        $ npm run build
+    </pre>
+    Your project is built. It took a bit of effort but from now on, if any
+    developer clone your project and try to build, all they need to do is:
+    <pre>
+        $ npm install && npm run build
+    </pre>
+    And! That! Is! It! Compared to the old ways, this is a revolution. In our
+    case, the setup is pretty simple but if you need unit test, a linter and a
+    publishing workflow, you can just describe these in the
+    <tt>package.json</tt> file. You can find a example of this <a class="visible-link"
+    href="https://github.com/jdmichaud/ts-boiler-plate/blob/master/package.json">here</a>.
+  </p>
+  <p>
+    From now on, onboarding developer is a breeze. Training aside, you can have
+    a developer ready in the time it takes to install <tt>git</tt> and
+    <tt>npm</tt>. The gain in productivity is enormous. Also, note that all this
+    tooling is useless to the user of your software and <tt>npm</tt> will
+    carefuly avoid installing the development dependencies when a user of your
+    package request it. It will however install the "dependencies" which are the
+    library your software needs to run properly.
+  </p>
+  <p>
+    Now everything is not so rosy. You still need to worry about where your
+    dependencies are downloaded from. To prevent security issues or just simply
+    if you don't like to depend on a free and unreliable piece of infrastructure
+    as <a class="visible-link" href="https://registry.npmjs.org/">registry.npmjs.org</a>
+    is, you will need to work a little harder and setup some proxy to it like <a
+    visible-link href="https://jfrog.com/artifactory/">artifactory</a>, but this
+    is a one time effort for which the benefits are obvious. Tools and versions
+    are explcitely defined in a human readable way. Build, test and packaging
+    steps are documented by their own code in a conventional way and the
+    software factory is consistently implemented accross all your projects.
+  </p>
+  <p>
+    Another caveat of course is that this solution is not universal. It applied
+    only to project based on web technologies. Were you to develop software in
+    C++ or python, you would have to find equivalent tools, <b>if you can</b>.
+    In that regards, C++ has been at a disatvantage for a long time. Python has
+    <tt>virtualenv</tt> and <tt>pip</tt>, rust has <tt>cargo</tt> (with some
+    limitations), java has <tt> maven</tt>. But C++ is lacking a universally
+    accepted solution. <a class="visible-link"
+    href="https://conan.io/"><tt>conan</tt></a> or <a class="visible-link"
+    href="https://github.com/microsoft/vcpkg"><tt>vcpkg</tt></a> or others have
+    been trying to fill that gap these last few years but none of them offers
+    the simplicity and universality of a solution like <tt>npm</tt>. It will
+    probably remain so for many years to come, even though the introduction of
+    <a class="visible-link"
+    href="https://en.cppreference.com/w/cpp/language/modules">modules</a> in
+    C++20 might save the day. Time will tell...
+  </p>
 </div>
