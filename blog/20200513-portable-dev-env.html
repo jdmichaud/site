@@ -48,39 +48,39 @@
     transpile the source to javascript, unit test it and bundle it in a form
     that can be easily consumed by a browser. You will first create a
     <tt>package.json</tt> file:
-    <pre>
+    <pre><code class="json">
         {
           "name": "my-project",
         }
-    </pre>
+    </code></pre>
     That's it, you have a valid <tt>package.json</tt> file. Let's install what's
     necessary to transpile your project:
-    <pre>
+    <pre><code class="bash">
         $ npm install --save-dev typescript
-    </pre>
+    </code></pre>
     You instruct <tt>npm</tt> you will need a development dependencies. This
     development dependencies is necessary to the developer but not to the user
     of your software. More on this later. Now your <tt>package.json</tt> looks
     like this (version notwithstanding):
-    <pre>
+    <pre><code class="json">
         {
           "name": "my-project",
           "devDependencies": {
             "typescript": "^3.9.2"
           }
         }
-    </pre>
+    </code></pre>
     You create a source file:
-    <pre>
+    <pre><code class="bash">
         $ cat > main.ts
         function main(): void {
           console.log('Hello world!');
         }
 
         window.onload = main;
-    </pre>
+    </code></pre>
     Now let's configure <tt>npm</tt> to build your project:
-    <pre>
+    <pre><code class="json">
         {
           "name": "my-project",
           "scripts": {
@@ -90,16 +90,16 @@
             "typescript": "^3.9.2"
           }
         }
-    </pre>
+    </code></pre>
     Then build it:
-    <pre>
+    <pre><code class="json">
         $ npm run build
-    </pre>
+    </code></pre>
     Your project is built. It took a bit of effort but from now on, if any
     developer clone your project and try to build, all they need to do is:
-    <pre>
+    <pre><code class="json">
         $ npm install && npm run build
-    </pre>
+    </code></pre>
     And! That! Is! It! Compared to the old ways, this is a revolution. In our
     case, the setup is pretty simple but if you need unit test, a linter and a
     publishing workflow, you can just describe these in the

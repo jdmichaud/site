@@ -33,6 +33,7 @@ async function main() {
     const contentNode = Array.from(div.childNodes).filter(n => n.nodeType !== Node.TEXT_NODE)[0];
     entry.n.replaceWith(contentNode);
   }
+  hljs.initHighlighting()
 }
 
 window.onload = main
