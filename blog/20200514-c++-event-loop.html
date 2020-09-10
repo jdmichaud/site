@@ -11,7 +11,7 @@
   <p>
     On the web, this problem is magnified by the fact that you business logic,
     most of the time, will be outsourced on a server somewhere hundreds or
-    thousands kilometers away. Evey HTTP call and more generally, every
+    thousands kilometers away. Every HTTP call and, more generally, every
     function call that will take time shall be performed asynchronously, so that
     your UI is availalble to the user and is not being bog down by the rest of
     your application. You will be tempted to use threads to solve that problem.
@@ -47,13 +47,14 @@
       console.log(reponse);
     </code></pre>
   <p>
-    There is no risk that Javascript code is executed at the same time here, even
-    if the HTTP response comes back at the same moment a user move its mouse, the
-    browser will push those event in the queue and only one of those events will
-    processed at the same time. This *greatly* simplifies your design. You will
-    never have to worry about simultaneous execution of code and will never have
-    to maintain complex system of mutexes and other semaphores to protect you from
-    that rogue thread coming to get your resources.
+    There is no risk that multiple thread executes Javascript code at the same
+    time here, even if the HTTP response comes back at the same moment a user
+    move his mouse. The browser will push those events in the queue and only one
+    of those events will be processed at the same time. This *greatly* simplifies
+    your design. You will never have to worry about simultaneous execution of
+    code and will never have to maintain complex system of mutexes and other
+    semaphores to protect you from that rogue thread coming to get your
+    resources.
   </p>
   <p>
     Thanks to the event loop, complexity is being reduced by a design pattern,
@@ -82,7 +83,7 @@
   <p>
     Events can be user-defined (actually only one event is defined by default
     which is <tt>Timeout</tt>) and you do not require any overloading for that.
-    For example, if you need a event representing a key is pressed:
+    For example, if you need a event representing a pressed key:
     <pre><code class="c++">
       class KeydownEvent: public Event {
       public:
@@ -109,7 +110,7 @@
     The difficulties I had to face were mainly due to the type system. There are
     few possilities of reflection in C++, but there are still some useful tools
     like <tt>type_index</tt>. Variadic template arguments were also a little
-    trikcy to use, the syntax being far from obvious at first. But as an
+    tricky to use, the syntax being far from obvious at first. But as an
     old-timer who learned C++98 back in the day, I was surprised at how C++ got
     easy to use with the latest new language features. The improvements made to
     the compilation error messages were a life saver.

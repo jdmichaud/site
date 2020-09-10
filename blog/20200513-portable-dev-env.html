@@ -23,9 +23,9 @@
   <p>
     But the advent of web technologies brought a wind of change. <tt>npm</tt>,
     the node package manager, suddenly allowed a developer to explicitely
-    describe, in a simple json file, what are its dependencies and what the
-    projects needs to convert its source code to the final deliverable. The
-    <tt>npm</tt> people were smart enough to split the concept of dependencies
+    describe, in a simple json file, what are his project's dependencies and what
+    it needs to convert its source code to the final deliverable. The
+    <tt>npm</tt> people had the good idea to split the concept of dependencies
     between what was needed to generate an artifact (the development
     dependencies) and what what needed to actually run the software, the
     dependencies. From now on, a project could specify, in a human readable way,
@@ -100,6 +100,7 @@
     <pre><code class="json">
         $ npm install && npm run build
     </code></pre>
+  <p>
     And! That! Is! It! Compared to the old ways, this is a revolution. In our
     case, the setup is pretty simple but if you need unit test, a linter and a
     publishing workflow, you can just describe these in the
@@ -125,16 +126,16 @@
     is a one time effort for which the benefits are obvious. Tools and versions
     are explcitely defined in a human readable way. Build, test and packaging
     steps are documented by their own code in a conventional way and the
-    software factory is consistently implemented accross all your projects.
+    software factory is consistently implemented accross all of your projects.
   </p>
   <p>
     Another caveat of course is that this solution is not universal. It applied
     only to project based on web technologies. Were you to develop software in
     C++ or python, you would have to find equivalent tools, <b>if you can</b>.
-    In that regards, C++ has been at a disatvantage for a long time. Python has
-    <tt>virtualenv</tt> and <tt>pip</tt>, rust has <tt>cargo</tt> (with some
-    limitations), java has <tt> maven</tt>. But C++ is lacking a universally
-    accepted solution. <a class="visible-link"
+    In that regards, C++ has been at a disadvantage for a long time. Python has
+    <tt>virtualenv</tt>, <tt>pip</tt> ans <tt>poetry</tt>, rust has <tt>cargo</tt>
+    (with some limitations), java has <tt> maven</tt>. But C++ is lacking a
+    universally accepted solution. <a class="visible-link"
     href="https://conan.io/"><tt>conan</tt></a> or <a class="visible-link"
     href="https://github.com/microsoft/vcpkg"><tt>vcpkg</tt></a> or others have
     been trying to fill that gap these last few years but none of them offers
