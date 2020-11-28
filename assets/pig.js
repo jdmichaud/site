@@ -1,11 +1,5 @@
 function nextTag(dataset, offset) {
   const tag = dataset.slice(offset, offset + 4);
-  // console.log(offset.toString(16),
-  //   dataset[offset + 1].toString(16),
-  //   dataset[offset].toString(16),
-  //   dataset[offset + 3].toString(16),
-  //   dataset[offset + 2].toString(16),
-  // );
   offset += 4; // Skip tag
   const VR = String.fromCharCode.apply(null, dataset.slice(offset, offset + 2));
   offset += 2; // Skip VR

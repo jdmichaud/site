@@ -1,0 +1,28 @@
+<div>
+  <h3>From DICOM to MPR (part 4)</h3>
+  <p>
+    In the previous installement of this multi-part series of articles we
+    discovered the DICOM standards and how it came to be. The way data are
+    stored according to DICOM and how these data can be extracted and
+    interpreted. We also had a look at the various coordinate system.
+  </p>
+
+  <h4>Coordinate system, a reminder.</h4>
+  <p>
+    When we work in computer graphics, what we manipulate all the time are
+    vector spaces. A space where an element, called a vector, is represented by
+    an array of numbers. In a 2D vector space, here is an example of a valid
+    vector u=[2, 3]. In themselves, these coordinates do not mean anything. You
+    are able to know what this vector represent only if you know the <i>base</i>
+    of that vector space. The base is a set of vectors which are going to be
+    combined linearly to represent a particular point in our space. Let's assume
+    that our 2D vector space has the canonical base i=[1, 0] and j=[0, 1]. Then
+    u will be found in the vector space following that linear combination: 2 x i
+    + 3 x j. Which, once processed is: 2 x [1, 0] + 3 x [0, 1] = [2, 0] + [0, 3]
+    = [2, 3].
+  </p>
+  <div style="display:flex; flex-direction: column">
+    <div style="display:flex; justify-content: center;"><img src="../assets/base.svg" style="width: 15%;"></img></div>
+    <div style="display:flex; justify-content: center;"><p style="font-size: 12px"><p>A vector as a linear combination of the base vector</p></div>
+  </div>
+</div>
