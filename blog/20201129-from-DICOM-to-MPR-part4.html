@@ -1,28 +1,37 @@
 <div>
   <h3>From DICOM to MPR (part 4)</h3>
   <p>
-    In the previous installement of this multi-part series of articles we
+    In the previous installment of this multi-part series of articles we
     discovered the DICOM standards and how it came to be. The way data are
     stored according to DICOM and how these data can be extracted and
-    interpreted. We also had a look at the various coordinate system.
+    interpreted. We also had a look at the various coordinate systems and how to
+    hop from one to another. Now we will all put this together and render our
+    very first MPR image !
   </p>
 
-  <h4>Coordinate system, a reminder.</h4>
+  <h4>Final results</h4>
   <p>
-    When we work in computer graphics, what we manipulate all the time are
-    vector spaces. A space where an element, called a vector, is represented by
-    an array of numbers. In a 2D vector space, here is an example of a valid
-    vector u=[2, 3]. In themselves, these coordinates do not mean anything. You
-    are able to know what this vector represent only if you know the <i>base</i>
-    of that vector space. The base is a set of vectors which are going to be
-    combined linearly to represent a particular point in our space. Let's assume
-    that our 2D vector space has the canonical base i=[1, 0] and j=[0, 1]. Then
-    u will be found in the vector space following that linear combination: 2 x i
-    + 3 x j. Which, once processed is: 2 x [1, 0] + 3 x [0, 1] = [2, 0] + [0, 3]
-    = [2, 3].
+    You can see the final result <a class="visible-link" href="/mpr">at this
+    address</a>. An empty canvas should appear on the page. Drag and drop some
+    DICOM instances on it (they should contain at least one full volume). Be
+    careful, Firefox's drag and drop is a little shaky, prefer Chrome here.
+    After a couple of seconds, a coronal view of your volume should appear.
   </p>
-  <div style="display:flex; flex-direction: column">
-    <div style="display:flex; justify-content: center;"><img src="../assets/base.svg" style="width: 15%;"></img></div>
-    <div style="display:flex; justify-content: center;"><p style="font-size: 12px"><p>A vector as a linear combination of the base vector</p></div>
-  </div>
+  <p>
+    As previously mentionned, this code aims at simplicity and readability. It
+    does not support all the DICOM variations and quirks. It will work with a
+    well-behaved DICOM format and nothing else. Moreover, it is awfully slow and
+    there are a dozen of optimisation opportunities left for the reader as an
+    exercise. An implementation through WebGL is even possible. The only
+    difficulty being to transfer the volume to GPU memory, but the results are
+    impressive, even with tri-linear interpolation ! Maybe the subject of a
+    future article if popular demand is high ;)
+  </p>
+  <h4>Conclusion</h4>
+  <p>
+    Here you go. From DICOM to MPR. The journey was arduous but rewarding. In
+    order to master a technology, one must start from the beginning and be
+    ready to spend much time getting into the details but as a result you gain
+    insight allowing you to produce amazing results.
+  </p>
 </div>
