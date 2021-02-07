@@ -1,0 +1,246 @@
+<div>
+  <style>
+    .eqns {
+      display: flex;
+      justify-content: center;
+       align-items: center;
+      flex-direction: column;
+    }
+    .eqn {
+      white-space: pre;
+      font-style: italic;
+    }
+  </style>
+  <h3>A little financial maths</h3>
+  <p>
+    For the first post of 2021 I though about documenting a subject on which I
+    dwelve on a regular basis each time the need to scratch the housing market
+    itch appears. When to buy? What to buy? Where to buy? For those owning one
+    or multiple properties, the market seems "good" when it rises. However, for
+    first time buyer, the housing market is some kind of a dread, especially in
+    France where prices has been climbing way faster than wages for years.
+  </p>
+  <p>
+    So regularly I asm myself how much a loan would cost, what would be the
+    monthly payment and what if interest rates were to raise, how much the
+    housing market would move. To answer all this, you need a little bit of
+    background of financial math that I always struggle to recover from my last
+    scratching session. So here is a simple explanation of the compound interest
+    with monthly payment formula.
+  </p>
+  <h4>Compound interests</h3>
+  <p>
+    You learn at school that when you put money in the bank, the money work for
+    you (well it actually doesn't, people do). So if you were
+    to put 1000€ at an interest rate of 10%, at the end of the year, you would
+    end up with 1000€ + 10% of 1000€ = 1100€. The simple form of this equation is:
+  </p>
+  <div class="eqns">
+    <div class="eqn">1000 × 1.10 = 1100</div>
+  </div>
+  <p>
+    If we generalize with <i>a</i> being the capital (here 1000) and <i>r</i>
+    being the interest rate of 10% (meaning 0.10):
+  </p>
+  <div class="eqns">
+    <div class="eqn">a(1) = a(0) × (1 + r)</div>
+  </div>
+  <p>On the second year:</p>
+  <div class="eqns">
+    <div class="eqn">a(2) = a(1) × (1 + r)</div>
+  </div>
+  <p>
+  So we can see a pattern appear here. As interests will have to be paid on
+  interests received the preceding year, interests are coumpounded. Series are
+  not the best way to represent this, especially if we want to use a computer
+  to do the hard work for us. A polynomial form will be way better. This polynomial
+  will take the initial capital, the interest rate and the number of years and will
+  output the amount with interets:
+  </p>
+  <div class="eqns">
+    <div class="eqn">a(n) = a(n-1) × (1 + r)</div>
+    <div class="eqn">a(n) = a(n-2) × (1 + r) × (1 + r)</div>
+    <div class="eqn">a(n) = a(n-3) × (1 + r) × (1 + r) × (1 + r)</div>
+    <div class="eqn">⋮</div>
+    <div class="eqn">a(n) = a(0) × (1 + r)<sup>n</sup></div>
+  </div>
+  <h4>With monthly payments</h4>
+  <p>
+    Baby stepping to the loan side of this now. When you put money in the bank,
+    the bank will loan it to someone who need a loan to buy a house. And the
+    dynamic will be exactly the same but in reverse. If you are the borrower,
+    the amount <i>a</i> is the the money given to you by the bank at interest
+    rate <i>r</i> and if that loan lasts <i>n</i> years, then you end up with
+    the same formula.
+  </p>
+  <div class="eqns">
+    <div class="eqn">a(n) = a(0) × (1 + r)<sup>n</sup></div>
+  </div>
+  <p>
+    Let's rearange it this way (you will see later why)
+  </p>
+  <div class="eqns">
+    <div class="eqn">a(n) = (1 + r)<sup>n</sup> × a(0)</div>
+  </div>
+  <p>
+    But you will need to pay back some of that at some point right? Usually on
+    the very first month, you start paying a monthly amount <i>m</i>. But if you
+    start paying back on the first month, you should not have to pay interests
+    on the amount you already have paid back. Because of this, banks will usually
+    compute compound interests not by year but by month:
+  </p>
+  <div class="eqns">
+    <div class="eqn">a(n) = (1 + r/12)<sup>12×n</sup> × a(0)</div>
+  </div>
+  <p>
+    For the sake of readability, from now on, let's rewrite <i>(1 + r/12)</i> to <i>R</i> and
+    <i>n</i> becomes months and not years.
+    Every month the bank computes the interest rate for the month (<i>r/12</i>).
+    So if you were to pay every months, the formula for the first months would look like this:
+  </p>
+  <div class="eqns">
+    <div class="eqn">a(1) = Ra(0) - m</div>
+    <div class="eqn">a(2) = Ra(1) - m</div>
+    <div class="eqn">a(2) = R[Ra(0) - m] - m</div>
+  </div>
+  <p>
+    Again we can see a pattern here:
+  </p>
+  <div class="eqns">
+    <div class="eqn">a(n) = R × … × (Ra(0) - m) - … - m</div>
+  </div>
+  <p>
+    If we develop this equation:
+  </p>
+  <div class="eqns">
+    <div class="eqn">a(n) = R<sup>n</sup>a(0) - R<sup>n-1</sup>m - R<sup>n-2</sup>m - … - m</div>
+  </div>
+  <p>
+    It's better but still a little awkward. The ellipsis means a loop, we can do metter than that,
+    especially if we know that:
+  </p>
+  <div class="eqns">
+    <div class="eqn">       S = 1 + x + x<sup>2</sup> + … + x<sup>n</sup></div>
+    <div class="eqn">  xS - S = x<sup>n+1</sup> - 1</div>
+    <div class="eqn">S(x - 1) = x<sup>n+1</sup> - 1</div>
+    <div class="eqn">       S = (x<sup>n+1</sup> - 1) / (x - 1)</div>
+  </div>
+  <p>
+    With this formula, we simplify to:
+  </p>
+  <div class="eqns">
+    <div class="eqn">a(n) = R<sup>n</sup>a(0) - R<sup>n-1</sup>m - R<sup>n-2</sup>m - … - m</div>
+    <div class="eqn">a(n) = R<sup>n</sup>a(0) - m × (R<sup>n</sup> - 1) / (R - 1)</div>
+  </div>
+  <p>
+    What does this formula gives us? On the left side, it will accumulate the
+    amount of money that you still owe to the bank and on the right side the
+    amount you already paid back. Once <i>a</i> reaches 0, you have paid back
+    you loan in full, capital plus interest.
+  </p>
+  <h4>How long to repay a loan?</h4>
+  <p>
+  From that equation, we can then do some simulation. Let's assume you have a property in mind that
+  costs 100000€, you are ready to spend no more than 600€ per months and the bank is asking for a 1%
+  rate, how long would it take for you to pay back that loan? (we assume the rate does not depend
+  on the loan term).
+  </p>
+  <p>
+  First, we have to turn the amount owed to 0:
+  </p>
+  <div class="eqns">
+    <div class="eqn">0 = R<sup>n</sup>a(0) - m × (R<sup>n</sup> - 1) / (R - 1)</div>
+  </div>
+  <p>
+    And to solve the equation with unknown <i>n</i>. For this, we will be using
+    the logarithm function. <a class="visible-link" href="https://www.youtube.com/watch?v=m2MIpDrF7Es">As you may know</a>,
+    the logarithm of a power will decompose the radical and the power as two
+    factors:
+  </p>
+  <div class="eqns">
+    <div class="eqn">log(a<sup>b</sup>) = b log(a)</div>
+  </div>
+  <p>
+    We also get the following nice properties:
+  </p>
+  <div class="eqns">
+    <div class="eqn">log(ab)  = log(b) + log(a)</div>
+    <div class="eqn">log(a/b) = log(b) - log(a)</div>
+  </div>
+  <p>
+    So let <i>I = R - 1</i> then do some weird algebra gymnastic to isolate <i>n</i>:
+  </p>
+  <div class="eqns">
+    <div class="eqn">0 = R<sup>n</sup>a - m × (R<sup>n</sup> - 1) / I</div>
+    <div class="eqn">0 = R<sup>n</sup>a - (R<sup>n</sup> - 1) × m / I</div>
+    <div class="eqn">
+    R<sup>n</sup>a - (R<sup>n</sup> - 1) × m / I
+0 = ――――――――――――――――――――――
+        1/I(m - aI)
+    </div>
+    <div class="eqn">
+    R<sup>n</sup>aI - (R<sup>n</sup> - 1) × m
+0 = ―――――――――――――――――――
+         m - aI
+    </div>
+    <div class="eqn">
+    R<sup>n</sup>aI - (R<sup>n</sup>m + m
+0 = ――――――――――――――――
+        m - aI
+    </div>
+    <div class="eqn">
+    R<sup>n</sup>(aI - m) + m
+0 = ――――――――――――――――
+         m - aI
+    </div>
+    <div class="eqn">
+    -R<sup>n</sup>(m - aI) + m
+0 = ―――――――――――――――――――
+         m - aI
+    </div>
+             m
+    <div class="eqn">
+0 = -R<sup>n</sup> + ――――――――
+           m - aI
+    </div>
+    <div class="eqn">
+         m
+ R<sup>n</sup> = ――――――――
+       m - aI
+    </div>
+  </div>
+  <p>
+  So:
+  </p>
+  <div class="eqns">
+    <div class="eqn">R<sup>n</sup> = m/(m - a(R - 1))</div>
+  </div>
+  <p>
+  With the logarithm:
+  </p>
+  <div class="eqns">
+    <div class="eqn">nlog(R) = log(m) - log(m - a(R - 1))</div>
+    <div class="eqn">n = [log(m) - log(m - a(R - 1))] / log(R)</div>
+  </div>
+  <p>
+    If we plug <i>a=100000</i>, <i>m=600</i> and <i>R=(1 + 0.01 / 12)</i>, then we
+    get a little more than 179 months (almost 15 years).
+  </p>
+  <h4>And so on...</h4>
+  <p>
+    You can manipulate that equation around to define different parameters as
+    unknown, for example if you want to know how much you can borrow at a particular
+    rate, with a predefined monthly payment on 20 years. It just requires a little
+    bit of algebra.
+  </p>
+  <p>
+    The best is to use a spreadsheet for that. Set the initial equation and use
+    the "goal seek" function to find 0 by varying a cell or another depending
+    on what you want to know.
+  </p>
+  <p>
+    That's it! You are all set to become a real estate mogule, or at least a
+    first time buyer... or remain a renter and watch price keep going up while
+    playing around with your spreadsheet ! Fun !
+  </p>
+</div>
