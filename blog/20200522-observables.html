@@ -42,7 +42,7 @@
   <p>
     First of, we will define what is an observer:
     <pre><code class="typescript">
-      export interface Observer<T> {
+      export interface Observer&lt;T&gt; {
         next?(value: T): void;
       }
     </code></pre>
@@ -56,8 +56,8 @@
     The API of the observable object is pretty simple too. A subscription
     method to which a callback is provided:
     <pre><code class="typescript">
-      interface Observable<T> {
-        subscribe(observer: Observer<T>): void {}
+      interface Observable&lt;T&gt; {
+        subscribe(observer: Observer&lt;T&gt;): void {}
       }
     </code></pre>
     All well and good. But all this is fine in the nominal case. The observer
@@ -65,7 +65,7 @@
     But what happens if no more event are expected? The observer should be
     notified through another channel.
     <pre><code class="typescript">
-      export interface Observer<T> {
+      export interface Observer&ltT> {
         next?(value: T): void;
         complete?(): void;
         error?(errValue: any): void;
@@ -91,8 +91,8 @@
     though the stream is not yet over? For this, the subscribe function can
     return an unsubscription function:
     <pre><code class="typescript">
-      interface Observable<T> {
-        subscribe(observer: Observer<T>): () => void {}
+      interface Observable&lt;T&gt; {
+        subscribe(observer: Observer&lt;T&gt;): () => void {}
       }
     </code></pre>
     Should you want to unsubscribe, you would just call that function:
