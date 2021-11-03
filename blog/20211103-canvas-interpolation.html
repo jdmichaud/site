@@ -1,0 +1,122 @@
+<div>
+  <h3>What you don't know can, and will, hurt you</h3>
+  <p>
+    In some industries, displaying images with pixel perfect precision can be
+    critical to quality. It might seem trivial to some, but in many ways,
+    displaying pixel on a screen is still an exercise that remains to be
+    mastered. There are many pitfalls but in this article we will focus on a
+    little known fact that can be tricky to analyze and overcome.
+  </p>
+  <p>
+    One of the advantage of developing applications based on web technologies is
+    the standardisation of the environment you are working with. There are
+    several vendors of web environments (also known as browsers) and they all
+    have to respect a set of standards and rules that you can rely to be
+    implemented consistently accross platforms, whatever your OSes and whatever
+    your hardware. It might be a little naive and such assumption might
+    sometimes lead you to a false sense of security. But at least, you can rest
+    assured that if a browser does not position your div properly, even though
+    your code respects the HTML and CSS standards, then the browser is to be
+    blamed.
+  </p>
+  <p>
+    However, not everything can be specified and indeed, not everything is. One
+    important aspect of displaying images on a discreet grid, that compose our
+    screens, is interpolation. When you have to display an image which
+    resolution does not perfectly match the resolution of the part of the screen
+    you are drawing it to, some measure of interpolation must be applied.
+    Unfortunately, how browser interpolate images is not entirely specified by
+    the folks at the W3C.
+  </p>
+  <p>
+    For example, let's look at the <a
+    href="https://developer.mozilla.org/en-US/docs/Web/API/CanvasRenderingContext2D/imageSmoothingEnabled"
+    class="visible-link"><i>imageSmoothingEnabled</i></a> option of the canvas.
+    It says that you can enable or disable image smoothing. Fine, but what is
+    image smoothing? Some sort of interpolation indeed. But what sort? Is it
+    nearest neighbor? Bilinear? Bicubic? Not specified. And this is only for the
+    general algorithm used, so let's forget about the detail and corner cases.
+  </p>
+  <p>
+    All this is to say that how browser interpolate images are implementation
+    details. However, it can have a non negligible impact on how images are
+    displayed. For example, let's take this image:
+  </p>
+  <div style="display:flex; flex-direction: column">
+    <div style="display:flex; justify-content: center;"><img src="../assets/awesome-face.png" style="width: 256px; height: 256px"></img></div>
+    <div style="display:flex; justify-content: center;"><p style="font-size: 12px"><p>A 256x256 image.</p></div>
+  </div>
+  <p>
+    This image is 256 pixels by 256 pixels and due to the limitation of this
+    blogging platform we can't display it in a canvas, but if you were to try to
+    display it this way:
+  </p>
+  <pre><code class="javascript">
+&lt;script type="text/javascript"&gt;
+  function main() {
+    const canvas = document.getElementById('image');
+    const context = canvas.getContext('2d');
+
+    base_image = new Image();
+    base_image.src = 'awesome-face.png';
+    base_image.onload = function(){
+      context.drawImage(base_image, 0.5, 0.5);
+      console.log(canvas.toDataURL());
+    }
+  }
+
+  window.onload = main;
+&lt;/script&gt;
+&lt;canvas id="image" width="257" height="257"&gt;&lt;/canvas&gt;
+  </code></pre>
+  <p>
+    You might be surprised at the result. Comparing the rendering of that code
+    on firefox and chrome will show this:
+  </p>
+  <div style="display:flex; flex-direction: column">
+    <div style="display:flex; justify-content: center;"><img src="../assets/awesome-face-diff.png" style="width: 50%"></img></div>
+    <div style="display:flex; justify-content: center;"><p style="font-size: 12px"><p>Difference between firefox and chrome rendering</p></div>
+  </div>
+  <p>
+    Indeed, here the image and the canvas sizes do not match. In order to have
+    the image centered in the canvas we set the top left corner of the image
+    window to (0.5, 0.5) which is perfectly reasonable. You will expect your
+    environment to perform the necessary interpolation so that the image
+    starting at half the top left pixel will lead to an appropriate result. And
+    it does. The problem is "appropriate result" here is under specified. The
+    interpolation is an implementation detail and both browser, at the time of
+    this writing, interprets these specifications differently.
+  </p>
+
+  <h3>Closer look</h3>
+  <p>
+    In order to understand what is going on, let's try to do something simpler.
+    We will print a black rectangle of size 2x2 to a canvas of size 2x2. Then
+    we will "zoom" on that canvas to a 256x256 canvas. See the code
+    <a href="https://gist.github.com/jdmichaud/cf151d46eb88bbffa53cecafb858009c" class="visible-link">here</a>.
+    This will give you a canvas that display 4 blocks which are basically the 4
+    pixels of your initial 2 by 2 canvas.
+  </p>
+  <p>
+    As you can see, if we position that rectangle at the coordinate (0.5, 0.5),
+    as we did with our awesome face earlier, the results in firefox and chrome
+    are quite differents.
+  </p>
+  <div style="display:flex; flex-direction: column">
+    <div style="display:flex; justify-content: center;"><img src="../assets/awesome-interpolation-in-chrome.png" style="width: 50%"></img></div>
+    <div style="display:flex; justify-content: center;"><p style="font-size: 12px"><p>Interpolation in chrome</p></div>
+  </div>
+  <div style="display:flex; flex-direction: column">
+    <div style="display:flex; justify-content: center;"><img src="../assets/awesome-interpolation-in-firefox.png" style="width: 50%"></img></div>
+    <div style="display:flex; justify-content: center;"><p style="font-size: 12px"><p>Interpolation in firefox</p></div>
+  </div>
+  <p>
+    If you are like me, you will find firefox interpolation more "correct". The
+    top left pixel only is a quarter filled with black whereas the top right and
+    bottom left are half filled and thus should be darker. But against the
+    specifications, both representations are fine. Yet there are different. So a
+    pixel perfect rendering, when interpolation is necessary, meaning everytime
+    the screen pixel grid does not exatly match the image grid, is impossible.
+    And if you do not know that, it might hurt you.
+  </p>
+</div>
