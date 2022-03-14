@@ -24,7 +24,7 @@ x.fillRect(6+2*X,2*Y,2,2)&x.fillRect(6-2*X,2*Y,2,2):r+=s.charCodeAt(i-28,x.fillS
 
     We will try to analyse it here. Why do it? Because it is absolutely
     useless and as a consequence, extemely urgent to do so. First of all, for
-    those who haven't tried it, it will generate an avatar depending on you
+    those who haven't tried it, it will generate an avatar depending on your
     username. Usernames being unique, every username will have a unique
     avatar. There is no random number being used here, it's all procedural
     generation, so as long as you keep the same username, your avatar will
@@ -115,11 +115,11 @@ function avatar(s) {
     inner for loop was transformed to a while loop. The for loop body is
     moved up as the increment expression is always executed after the for
     loop's body. First we can note that the avatar contains a right margin of
-    two pixels(blue-ish pixels on the right). The canvas width is 18 but only
-    14 columns are used. This allows a little separation with the username. Then,
-    the avatar is symmetric so we only have to come up with half of it. The
-    other half will be mirrored (grayed out), that's why we have two `fillRect`
-    calls, one for the left part and one for the right.
+    two pixels (blue-ish pixels on the right). Indeed, the canvas width is 18
+    but only 14 columns are used. This allows a little separation with the
+    username. Then, the avatar is symmetric so we only have to come up with
+    half of it. The other half will be mirrored (grayed out), that's why we
+    have two `fillRect` calls, one for the left part and one for the right.
 
   </p>
 
@@ -130,9 +130,9 @@ function avatar(s) {
 
   </p>
 
-    Now there is something strange that I did not understand which is: why do we
-    draw 2x2 pixels on a 14x14 canvas instead of just drawing 1x1 pixels on a
-    7x7 canvas? For example, modifying the function to:
+    Now there is something strange that I did not understand: why do we draw
+    2x2 pixels on a 14x14 canvas instead of just drawing 1x1 pixels on a 7x7
+    canvas? For example, modifying the function to:
 
   </p>
 
@@ -237,13 +237,13 @@ if (i &gt;= 28) {
 
     I have inverted the condition as well so that the clause are executed in
     the chronological order. First, `i` is greater than 28 obviously and we
-    will then start by scanning (with `charCodeAt`) the username letter and
-    use them to intialize r. It means that for each username, r will end up
-    being initialized to a unique value. This is our seed. Then `fillStyle`
-    is called repeateadly to initialize a color which whill be unique
-    depending on r. The multiple calls are useless, only the last one matter,
-    but I guess there was no avoiding multiple calls in order to limit the
-    code size.
+    will then start by scanning (with `charCodeAt`) the username characters
+    and use them to intialize r. It means that for each username, r will end
+    up being initialized to a unique value. This is our seed. Then
+    `fillStyle` is called repeateadly to initialize a color which whill be
+    unique depending on r. The multiple calls are useless, only the last one
+    matter, but I guess there was no avoiding multiple calls in order to
+    limit the code size.
 
   </p>
 
@@ -252,7 +252,7 @@ if (i &gt;= 28) {
     Once we have scanned the username, `i` is then less than 28. We will start
     filling up the canvas with the `fillRect` calls. For this, `X` and `Y`
     are used as pixels coordinates. X is masked against `i` with the value 3
-    (11 in binary). It means that `X` will vary between 0 and 3. This is the
+    (0b11 in binary). It means that `X` will vary between 0 and 3. This is the
     equivalent of % 3. Perfect to scan the lines or our 7x4 half (yes, 0, 1,
     2 and 3 will be the index of our 4 columns). `Y` will be the integer part
     of the division of `i` by 4. This is what a right shift by 2 (`>> 2`)
@@ -315,8 +315,8 @@ a: Array(8) [ 12667, 12440, 12490, 12460, 12637, 12582, 12171, 12545 ]
 
   <p>
 
-    The center of the avatar will probably contain more on pixels, due to the
-    value of X being at its max there. Same thing for the bottom of the
+    The center of the avatar will probably contain more "on" pixels, due to
+    the value of X being at its max there. Same thing for the bottom of the
     avatar.
 
   </p>
