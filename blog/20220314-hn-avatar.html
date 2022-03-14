@@ -1,0 +1,329 @@
+<div>
+  <h3>A dissection of a clever little avatar generator from HN</h3>
+  <p>
+
+    On the 14th of March 2022 a <a class="visible-link" href="https://news.ycombinator.com/item?id=30668137">"Show HN" article</a>
+    by user tomxor appeared on the popular tech news aggregation site <a class="visible-link" href="https://news.ycombinator.com/">Hacker News</a>
+    demonstrating a little piece of JS code that could add a nice avatar next
+    to each username. Indeed, HN design is quite minimalist and, except for
+    the username, nothing distinguish a comment from another in the comment
+    thread. Most people like it this way. That little piece of code worked
+    its magic with very few characters. Here it is:
+
+  </p>
+
+  <pre><code class="javascript">
+for(u of document.querySelectorAll('.hnuser'))
+for(u.prepend(c=document.createElement('canvas')),x=c.getContext('2d'),c.width=18,c.height=14,
+s=u.innerText,r=1,i=28+s.length;i--;i&lt;28?r&gt;&gt;&gt;29&gt;X*X/3+Y/2&&
+x.fillRect(6+2*X,2*Y,2,2)&x.fillRect(6-2*X,2*Y,2,2):r+=s.charCodeAt(i-28,x.fillStyle='#'+
+(r&gt;&gt;8&0xFFFFFF).toString(16)))r^=r&lt;&lt;13,r^=r&gt;&gt;&gt;17,r^=r&lt;&lt;5,X=i&3,Y=i&gt;&gt;2
+  </code></pre>
+
+  <p>
+
+    We will try to analyse it here. Why do it? Because it is absolutely
+    useless and as a consequence, extemely urgent to do so. First of all, for
+    those who haven't tried it, it will generate an avatar depending on you
+    username. Usernames being unique, every username will have a unique
+    avatar. There is no random number being used here, it's all procedural
+    generation, so as long as you keep the same username, your avatar will
+    not change. The avatar is arranged on a 14x18 canvas right before you
+    username. For example, here is the avatar for the username 'pg':
+
+  </p>
+
+  <div style="display:flex; flex-direction: column">
+    <div style="display:flex; justify-content: center;"><img src="../assets/pg-avatar.png" style="width: 256px; height: 256px"></img></div>
+    <div style="display:flex; justify-content: center;"><p style="font-size: 12px"><p>pg's avatar.</p></div>
+  </div>
+
+  <p>
+    Now, let's have a look at the code. If we arrange it a little:
+  </p>
+
+  <pre><code class="javascript">
+for(u of document.querySelectorAll('.hnuser'))
+  for(u.prepend(
+    c=document.createElement('canvas')),
+    x=c.getContext('2d'),
+    c.width=18,
+    c.height=14,
+    s=u.innerText,
+    r=1,
+    i=28+s.length;
+
+    i--;
+
+    i&lt;28 ? r&gt;&gt;&gt;29&gt;X*X/3+Y/2&&x.fillRect(6+2*X,2*Y,2,2)&x.fillRect(6-2*X,2*Y,2,2)
+           :r+=s.charCodeAt(i-28,x.fillStyle='#'+(r&gt;&gt;8&0xFFFFFF).toString(16)))
+
+    r^=r&lt;&lt;13,
+    r^=r&gt;&gt;&gt;17,
+    r^=r&lt;&lt;5,
+    X=i&3,
+    Y=i&gt;&gt;2
+  </code></pre>
+
+  <p>
+
+    We have a first for loop that goes through all the <code>.hnuser<code> entries in
+    the page (the usernames). For each of those we have a loop which, in its
+    initialization expression, is creating a canvas, in its condition
+    expression, check that the variable i is different from 0 and decrements
+    it and in its increment expression, calls `fillRect` and
+    `fillStyle`. It's were the avatar is being drawn. Finally, in the body of
+    the for loop, a few variables are being modified.
+
+  </p>
+
+  <p>
+
+    Let's try to rework all this a little to improve readability and be able
+    to manipulate it:
+
+  </p>
+
+  <pre><code class="javascript">
+function avatar(s) {
+  const c = document.createElement('canvas');
+  const x = c.getContext('2d');
+  c.width = 18;
+  c.height = 14;
+  let r = 1;
+  let i = 28 + s.length;
+
+  while (i--) {
+    r ^= r &lt;&lt; 13;
+    r ^= r &gt;&gt;&gt; 17;
+    r ^= r &lt;&lt; 5;
+    X = i & 3;
+    Y = i &gt;&gt; 2;
+
+    i &lt; 28 ? r &gt;&gt;&gt; 29 &gt; X * X / 3 + Y / 2 && x.fillRect(6 + 2 * X, 2 * Y, 2, 2) & x.fillRect(6 - 2 * X, 2 * Y, 2, 2)
+           : r += s.charCodeAt(i - 28, x.fillStyle = '#'+(r &gt;&gt; 8 & 0xFFFFFF).toString(16));
+  }
+
+  return c;
+}
+  </code></pre>
+
+  <p>
+
+    Here I have removed the for loops. I only get a function that takes a
+    username and returns a canvas with a drawn avatar in it. Note that the
+    inner for loop was transformed to a while loop. The for loop body is
+    moved up as the increment expression is always executed after the for
+    loop's body. First we can note that the avatar contains a right margin of
+    two pixels(blue-ish pixels on the right). The canvas width is 18 but only
+    14 columns are used. This allows a little separation with the username. Then,
+    the avatar is symmetric so we only have to come up with half of it. The
+    other half will be mirrored (grayed out), that's why we have two `fillRect`
+    calls, one for the left part and one for the right.
+
+  </p>
+
+  <div style="display:flex; flex-direction: column">
+    <div style="display:flex; justify-content: center;"><img src="../assets/pg-avatar-detail.png" style="width: 256px; height: 256px"></img></div>
+    <div style="display:flex; justify-content: center;"><p style="font-size: 12px"><p>pg's avatar.</p></div>
+  </div>
+
+  </p>
+
+    Now there is something strange that I did not understand which is: why do we
+    draw 2x2 pixels on a 14x14 canvas instead of just drawing 1x1 pixels on a
+    7x7 canvas? For example, modifying the function to:
+
+  </p>
+
+  <pre><code class="javascript">
+function avatar(s) {
+  const c = document.createElement('canvas');
+  const x = c.getContext('2d');
+  c.width = 9;
+  c.height = 7;
+  let r = 1;
+  let i = 28 + s.length;
+
+  while (i--) {
+    r ^= r &lt;&lt; 13;
+    r ^= r &gt;&gt;&gt; 17;
+    r ^= r &lt;&lt; 5;
+    X = i & 3;
+    Y = i &gt;&gt; 2;
+
+    i &lt; 28 ? r &gt;&gt;&gt; 29 &gt; X * X / 3 + Y / 2 && x.fillRect(3 + X, Y, 1, 1) & x.fillRect(3 - X, Y, 1, 1)
+           : r += s.charCodeAt(i - 28, x.fillStyle = '#'+(r &gt;&gt; 8 & 0xFFFFFF).toString(16));
+  }
+
+  return c;
+}
+  </code></pre>
+
+  <p>
+
+  Gives use exactly the same avatar. We only divided everything by 2
+  (canvas size and `fillRect` parameters). Let's move on, we will place this
+  piece of code in an <a class="visible-link"
+  href="https://gist.github.com/jdmichaud/97cf97429ff2231301c8cd3a10eb40ab">HTML
+  page</a> in order to fiddle with it a little:
+
+  </p>
+
+  <pre><code class="html">
+&lt;!DOCTYPE html&gt;
+&lt;html&gt;
+&lt;head&gt;
+  &lt;meta charset="utf-8"&gt;
+  &lt;meta name="viewport" content="width=device-width, initial-scale=1"&gt;
+  &lt;script type="text/javascript"&gt;
+    /************ PLACE YOUR AVATAR FUNCTION HERE ************/
+
+    function main() {
+      window.ctx = document.getElementById('c').getContext('2d');
+      window.ctx.imageSmoothingEnabled = false;
+    }
+
+    window.onload = main;
+  &lt;/script&gt;
+  &lt;style type="text/css"&gt;
+    canvas {
+      border: 1px solid lightgray;
+    }
+  &lt;/style&gt;
+  &lt;title&gt;&lt;/title&gt;
+&lt;/head&gt;
+&lt;body&gt;
+  &lt;canvas id="c" width=512 height=512&gt;&lt;/canvas&gt;
+&lt;/body&gt;
+&lt;/html&gt;
+  </code></pre>
+
+  <p>
+
+    This way we can just call <pre><code class="javascript">ctx.drawImage(avatar('pg'), 0, 0, 512, 512)</code></pre> in the console to see our avatar in a nice
+    512x512 canvas.
+
+  </p>
+
+  <p>
+
+    So once we've understood that we are only deciding what to do with half of
+    7x7 canvas (including the central column), we realise that we get
+    (7x4)<sup>2</sup> different avatars. The rest 7x3 pixels being a mirrors
+    of the first 7x3.
+
+  </p>
+
+  <p>
+
+    So how do we fill up those 28 pixels ? First note that the variable `i` is
+    initialized at 28 + the length of the username. I have rewritten the
+    ternary operator, at the end, with an `if` condition to reveal what is
+    going on:
+
+  </p>
+
+  <pre><code class="javascript">
+if (i &gt;= 28) {
+  r += s.charCodeAt(i - 28);
+  x.fillStyle = '#'+(r &gt;&gt; 8 & 0xFFFFFF).toString(16);
+} else {
+  r &gt;&gt;&gt; 29 &gt; X * X / 3 + Y / 2 && x.fillRect(3 + X, Y, 1, 1) & x.fillRect(3 - X, Y, 1, 1)
+}
+  </code></pre>
+
+  <p>
+
+    I have inverted the condition as well so that the clause are executed in
+    the chronological order. First, `i` is greater than 28 obviously and we
+    will then start by scanning (with `charCodeAt`) the username letter and
+    use them to intialize r. It means that for each username, r will end up
+    being initialized to a unique value. This is our seed. Then `fillStyle`
+    is called repeateadly to initialize a color which whill be unique
+    depending on r. The multiple calls are useless, only the last one matter,
+    but I guess there was no avoiding multiple calls in order to limit the
+    code size.
+
+  </p>
+
+  <p>
+
+    Once we have scanned the username, `i` is then less than 28. We will start
+    filling up the canvas with the `fillRect` calls. For this, `X` and `Y`
+    are used as pixels coordinates. X is masked against `i` with the value 3
+    (11 in binary). It means that `X` will vary between 0 and 3. This is the
+    equivalent of % 3. Perfect to scan the lines or our 7x4 half (yes, 0, 1,
+    2 and 3 will be the index of our 4 columns). `Y` will be the integer part
+    of the division of `i` by 4. This is what a right shift by 2 (`>> 2`)
+    does. For example, 27 shifted by 2 is: `0b11011` (27 ) >> 2 = `0b110`
+    (6). Note that 6 will be the result for `i` = 27, 26, 25 and 24. Indeed
+    the last two bits will vary 4 times which is right enough for our `X` to
+    go through all the pixels of the lines!:
+
+  </p>
+
+  <pre><code class="javascript">
+X 3 Y 6
+X 2 Y 6
+X 1 Y 6
+X 0 Y 6
+X 3 Y 5
+X 2 Y 5
+X 1 Y 5
+X 0 Y 5
+[...]
+X 0 Y 0
+  </code></pre>
+
+  <p>
+
+    Now that we are scanning those 28 pixels, we just need to fill them up.
+    This is where the magic happens. Notice that in the loop, `r` is being
+    manipulated to vary according to a certain pattern. Shift right, shift
+    left. Finally, in the `else` clause we test if `r` shifted by 29 is
+    greater than some combination of `X` and `Y` if yes (`&&`) we call ou
+    `fillRect` otherwise we don't.
+
+  </p>
+
+  <p>
+
+    `r` is being manipulated with boolean operators so it is always treated as
+    a 32 bits integer. By shifting by 29 we basically only get the 3 most
+    significant bits of the result of the bits twiddling. We will get
+    a "pseudo-random" value between 0 and 7. On the other side of the
+    condition `X * X / 3 + Y / 2` will vary between 3 * 1 + 6 / 2 (6) and 0.
+    We draw a pixel only when `r` is greater, which means that we will get
+    more "on" pixels than "off" pixels. We draw that conclusion from the fact
+    that the the value for `r >>> 29` are continuously distributed:
+
+  </p>
+
+  <pre><code class="javascript">
+r = 534;
+a = []
+for (let i = 0; i < 100000; ++i) {
+  r ^= r &lt;&lt; 13;
+  r ^= r &gt;&gt;&gt; 17;
+  r ^= r &lt;&lt; 5;
+  x = r &gt;&gt;&gt; 29;
+  a[x] = a[x] === undefined ? 0 : a[x] + 1;
+}
+a: Array(8) [ 12667, 12440, 12490, 12460, 12637, 12582, 12171, 12545 ]
+  </code></pre>
+
+  <p>
+
+    The center of the avatar will probably contain more on pixels, due to the
+    value of X being at its max there. Same thing for the bottom of the
+    avatar.
+
+  </p>
+
+  <p>
+    Anyway, nice little exercise. Congrats to the author. back to work!
+  </p>
+
+
+</div>

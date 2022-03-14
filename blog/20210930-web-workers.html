@@ -57,7 +57,8 @@ onmessage = function(event) {
   console.log('Event received from main script', event);
   postMessage(event.data * 2);
 }
-  </code></pre>  <p>
+  </code></pre>
+  <p>
     There is a few things to unpack. First, you will notice the mode of
     communication between the main thread and the worker is through message
     passing. It might seem needlessly complex, why not work through
