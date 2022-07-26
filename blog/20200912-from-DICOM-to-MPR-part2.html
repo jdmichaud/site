@@ -2,6 +2,9 @@
   <h3>From DICOM to MPR (part 2)</h3>
   <h4>The format</h4>
   <p>
+    This is the second part of 5 parts series. Link to <a href="blog-entry.html?article=20200919-from-DICOM-to-MPR-part3.html" class="visible-link">part 3</a>.
+  </p>
+  <p>
     So what is DICOM? According to <a href="https://www.dclunie.com" class="visible-link">David Clunie</a>,
     in his presentation <a href="https://www.dclunie.com/papers/MICCAI_2017_Clunie_DICOM.pdf" class="visible-link">
     "DICOM: Overview and historical perspective"</a>, it is:
@@ -380,7 +383,7 @@ function twoBytesToNumber(arrayBuffer) {
       if (bitsAllocated !== 16) {
         throw new Error('Oh no, not a 16 bits dataset!');
       }
-      const pixels = new Uint16Array(getTag(dataset, '00281051'));
+      const pixels = new Uint16Array(getTag(dataset, '7fe00010'));
     </code></pre>
   <p>
     First, note that RescaleSlope and RescaleIntercept are store with a value
@@ -437,10 +440,10 @@ function twoBytesToNumber(arrayBuffer) {
         imageData.data[index * 4 + 3] = 255; // A (255 is completely opaque)
       });
       const canvas = document.createElement('canvas');
-      const canvas.width = columns;
-      const canvas.height = columns;
+      canvas.width = columns;
+      canvas.height = columns;
       const ctx = canvas.getContext('2d');
-      const ctx.putImageData(imageData, 0, 0);
+      ctx.putImageData(imageData, 0, 0);
       // You should now see an nice image in your page ! :)
       document.body.appendChild(canvas);
       </code></pre>
@@ -477,5 +480,8 @@ function twoBytesToNumber(arrayBuffer) {
     to the nature of the format, the size of the images and the processing
     applied to them. If you were to write a "real" viewer in Javascript, there
     would be a lot of work just to make it usable.
+  </p>
+  <p>
+    Next <a href="blog-entry.html?article=20200919-from-DICOM-to-MPR-part3.html" class="visible-link">some geometry reminders</a>.
   </p>
 </div>
