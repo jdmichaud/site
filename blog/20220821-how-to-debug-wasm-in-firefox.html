@@ -1,0 +1,180 @@
+<div>
+  <h3>How to debug WASM file in Firefox (you can't)</h3>
+  <p>
+    I have been playing around WebAssembly and as a Firefox user, I am a little
+    frustrated by the lack of debug support for WASM file in this browser. Years
+    ago, Chrome <a class="visible-link" href=https://developer.chrome.com/blog/wasm-debugging-2020/>added the facility</a>
+    to debug any WASM file the same way you would with any Javascript file. You
+    can step through the code, inspect variables, etc. Firefox does not allow this.
+    Probably because the only way to debug code in a browser, when the loaded code
+    has been mangled (either by some uglifying process for JS or just by compilation
+    for WASM), is through the use of <a class="visible-link" href=https://pvdz.ee/weblog/281>Source Maps</a>.
+    But the way WASM binary files are produced today is not through some
+    uglifying process but through the use of your usual compiler
+    (C, C++, rust, zig, etc.). These compilers have had a way to encode debugging
+    information long before source maps existed and this way is DWARF (well
+    actually there are many historical formats for debugging purposes, a nice refresher
+    <a class="visible-link" href=https://dwarfstd.org/doc/Debugging%20using%20DWARF-2012.pdf>can be found here</a>).
+  </p>
+  <p>
+    And so both worlds collide and you end up with Firefox not adapted to read
+    these DWARF debug information and the impossibility to debug your WASM project
+    in Firefox but through the use of good'ol "printfs" (or their browser
+    equivalent). Printfs are good but sometime you want/need more. So I started to
+    have a look at how the situation could be improved for Firefox.
+  </p>
+  <h4>A workaround</h4>
+  <p>
+    First, there is a tool called <a class="visible-link" href=https://github.com/emscripten-core/emscripten/blob/main/tools/wasm-sourcemap.py>wasm-sourcemap.py</a>.
+    It's a python script that will read the output of another tool called
+    <a class="visible-link" href=https://llvm.org/docs/CommandGuide/llvm-dwarfdump.html>llvm-dwarfdump</a> and
+    produce a source maps based on the DWARF data found in your WASM file. You use
+    it this way:
+  </p>
+    <pre><code class="bash">
+      $ llvm-dwarfdump -debug-info -debug-line --recurse-depth=0 myexecutable.wasm > dwarfdump.txt
+      $ python3 wasm-sourcemap.py --dwarfdump-output dwarfdump.txt myexecutable.wasm --output myexecutable.wasm.sourcemap -u http://localhost:8000/main.wasm.sourcemap -w myexecutable2.wasm
+    </code></pre>
+  <p>
+    What the script does is:
+    <ul>
+      <li>Parse the dwarfdump output and WASM executable (with DWARF symbol in it!)</li>
+      <li>Write the sourcemap (in JSON format) into a output file called myexecutable.wasm.sourcemap</li>
+      <li>Embed, in the WASM file itself (here renamed myexecutable2.wasm), the address to the source map generated for the browser to find.</li>
+    </ul>
+  </p>
+  <div style="display:flex; flex-direction: column">
+    <div style="display:flex; justify-content: center;"><img src="../assets/source-map-generation-process.svg" style="width: 50%;"></img></div>
+    <div style="display:flex; justify-content: center;"><p style="font-size: 12px"><p>Extract DWARF and embed sourceMap.</p></div>
+  </div>
+  <p>
+    Of course, make sure you produced your executable with debug symbols.
+    Otherwise, there'll be nothing to parse.
+  </p>
+  <p>
+    There is a couple of drawbacks from this approach. First, wasm-sourcemap, as
+    found on the interweb, does not work. It was probably written before the
+    Python3 schism and require some adjustements:
+  </p>
+    <pre><code class="diff">
+  140,141c140,141
+&lt;   section_name = "sourceMappingURL"
+&lt;   section_content = encode_uint_var(len(section_name)) + section_name + encode_uint_var(len(url)) + url
+---
+&gt;   section_name = bytes("sourceMappingURL", "utf-8")
+&gt;   section_content = encode_uint_var(len(section_name)) + section_name + encode_uint_var(len(url)) + bytes(url, "utf-8")
+    </code></pre>
+  <p>
+    Then, as you can see in the command lines above, the URL has to be encoded as
+    absolute to you server (here my localhost dev server). There is a workaround
+    to this which is to store a relative URL in the WASM file, catch the WASM
+    binary in the browser before calling <b>WebAssembly.instantiate</b>
+    and rewrite the URL relative to <b>window.href.location</b> as
+    <a class="visible-link" href=https://github.com/oasislabs/wasm-sourcemap>demonstrated here</a>.
+  </p>
+  <h4>Make your own path</h4>
+  <p>
+    All this is well and good but is a little involved. Wouldn't it be better
+    to do this in one step IN the browser? No need for an additional build step
+    and the use of a gazillions tools, more or less maintained? There is nothing
+    preventing you from parsing the DWARF symbols directly in the browser from the
+    WASM file before instantiating the module and embedding the source map, inline,
+    right into the wasm buffer.
+  </p>
+  <p>
+    But for this, we need to parse DWARF symbols! And how to we do that??
+  </p>
+  <h4>A quick WASM binary format intro</h4>
+  <p>
+    First, let's have a look at the WASM binary format
+    <a class="visible-link" href=https://webassembly.github.io/spec/core/intro/index.html>formally described here</a>.
+    As you can see this document (at least at the time of writing this article)
+    is, shall we say, abstruse. And for a <a class="visible-link" href=https://grugbrain.dev/>grub brained developer</a>
+    like us (at least like me) it requires some finessing. So looking at some
+    vulgarising blog <a class="visible-link" href=https://coinexsmartchain.medium.com/wasm-introduction-part-1-binary-format-57895d851580>here</a>
+    and <a class="visible-link" href=https://blog.ttulka.com/learning-webassembly-2-wasm-binary-format>there</a>
+    we can find out that the WASM format is more or less built this way:
+    <pre><code>
+      0061 736d 0100 0000 0105 ....
+    </code></pre>
+    The first four bytes will contain a magic word: 0x00 (\0) 0x61 (a) 0x73 (s) 0x6d (m).
+    So in full: <b>\0asm</b>. Then will come the WASM version on four bytes: 0x01000000.
+    No, this is not WASM version 64. WASM binary files are
+    <a class="visible-link" href=https://en.wikipedia.org/wiki/Endianness#/media/File:Little-Endian.svg>little endian</a>.
+    It means you start to read the little end of the word first, so the starting
+    0x01 get at the end of the word: 0x00000001: WASM Version 1. The one and
+    only WASM version as the time of writing this article.
+  </p>
+  <p>
+    Then you start getting to the meat of the WASM file: <a class="visible-link" href=https://webassembly.github.io/spec/core/binary/modules.html>the sections</a>.
+    The WASM binary is a succession of sections each with a type and a size. The
+    type tells you what the section contain and the size tells you the amount of
+    bytes it occupies in the file. Here, the section starts right after the WASM
+    version indicated by the cursor:
+    <pre><code>
+      0061 736d 0100 0000 0105 XXXX XXXX XX
+                          ^
+    </code></pre>
+  <p>
+    The type is a value from 0 to 11 and is stored on 1 byte. Type 0 are custom
+    sections and from 1 to 11 you have "WASM" sections.
+    After the section comes its size as a unsigned <a class="visible-link" href=https://en.wikipedia.org/wiki/LEB128>LEB128 integer</a>.
+    LEB128 is a format used to store arbitrary size integer. Refer to the provided
+    Wikipedia page to know how to decode that LEB128 integer.
+  </p>
+  <p>
+    So here we have a section of type 1 stored in 5 bytes. The size does not take the
+    type and the size into account, so only the XXs are counted. If you
+    wanted to skip that section, once your position in the buffer is right after
+    the size you just read, add the size and you will point at the byte in the
+    buffer that corresponds to the next section type id (or the end of the file).
+    <pre><code>
+      0061 736d 0100 0000 0105 XXXX XXXX XX01 ....
+                               . -- +5 --> ^
+    </code></pre>
+  </p>
+  <h4>DWARF sections</h4>
+  <p>
+    Earlier I mentionned that we are going to ignore the WASM sections and focus
+    on the custom sections. That's because this is where the DWARF sections live.
+    DWARF is not defined by the WASM specs. DWARF pre-dates WASM and could be found,
+    up to now, first in ELF executables. How can we recognized DWARF section then?
+  </p>
+  <p>
+    Within the WASM custom section (those with Type ID 0), we will find the name
+    of the section:
+  </p>
+    <pre><code>
+      .. .. 00 8D 0B  0B 2E 64 65  62 75 67 5F  69 6E 66 6F
+    </code></pre>
+  <p>
+    This is an example of a DWARF <b>.debug_info</b> section embedded in a WASM
+    file. The first byte is 0x00 indicating a custom section. Then 0x8D and 0xBD
+    indicates the size of this custom section (here 0x0B8D (LEB128) -> 0x058D (uint16))
+    and then we get another unsigned LEB128 size: 0x0B. This is the size of the
+    name of the section. It says that the next 0x0B (11) bytes are ascii
+    characters:
+    <pre><code class="diff">
+    0x2E -> .
+    0x64 -> d
+    0x65 -> e
+    0x62 -> b
+    0x75 -> u
+    0x67 -> g
+    0x5F -> _
+    0x69 -> i
+    0x6E -> n
+    0x66 -> f
+    0x6F -> o
+    </code></pre>
+    This section is named <b>.debug_info</b>. And this is a DWARF section! You
+    <a class="visible-link" href=https://gist.github.com/jdmichaud/7fb81e46a97b0bd47fcaca649ad969ce#file-dump_wasm_sections-js>can find here some Javascript code</a>
+    usable in <b>node</b> that put all this in practice to dump information on
+    your WASM executable sections.
+  </p>
+  <h4>Next time</h4>
+  <p>
+    In our next article, I will describe in more detail how DWARF sections are
+    organized and how we extract information from them to generate our sourcemap.
+  </p>
+</div>
