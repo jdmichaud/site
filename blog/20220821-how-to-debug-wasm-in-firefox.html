@@ -150,8 +150,18 @@
   <p>
     This is an example of a DWARF <b>.debug_info</b> section embedded in a WASM
     file. The first byte is 0x00 indicating a custom section. Then 0x8D and 0xBD
-    indicates the size of this custom section (here 0x0B8D (LEB128) -> 0x058D (uint16))
-    and then we get another unsigned LEB128 size: 0x0B. This is the size of the
+    indicates the size of this custom section (here 0x0B8D (LEB128) -> 0x058D
+    (uint16)):
+  <pre>
+0x8D 0x0B         In the file
+
+0   B    8   D
+00001011 10001101 Once flipped because of little endianess
+ 0001011  0001101 Remove the 7th bit
+      10110001101 Concatenate
+            0x58D The actual value
+  </pre>
+    Then we get another unsigned LEB128 size: 0x0B. This is the size of the
     name of the section. It says that the next 0x0B (11) bytes are ascii
     characters:
     <pre><code class="diff">
@@ -174,7 +184,8 @@
   </p>
   <h4>Next time</h4>
   <p>
-    In our next article, I will describe in more detail how DWARF sections are
-    organized and how we extract information from them to generate our sourcemap.
+    In our <a href="blog-entry.html?article=20220903-DWARF-overview.html" class="visible-link">next article</a>,
+    I will describe in more detail how DWARF sections are organized and how we
+    extract information from them to generate our sourcemap.
   </p>
 </div>
