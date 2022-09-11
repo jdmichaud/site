@@ -1,4 +1,5 @@
 <div>
+  <h2>Use DWARF to debug WASM in the browser (part 1)</h2>
   <h3>The DWARF standard and how to extract information for fun and profit</h3>
   <p>
     In our <a class="visible-link" href=blog-entry.html?article=20220821-how-to-debug-wasm-in-firefox.html>previous article</a>
@@ -21,7 +22,7 @@
     in the WASM file and how we can extract useful data for debugging. The final
     authority on everything DWARF is the DWARF Debugging Information Format
     Committee. Their output is <a class="visible-link" href=https://dwarfstd.org/doc/DWARF4.pdf>a precious document</a>
-    that I have been refering to a lot. This is for version 4 of DWARF. The
+    that I have been referring to a lot. This is for version 4 of DWARF. The
     <a class="visible-link" href=https://dwarfstd.org/doc/DWARF5.pdf>latest version is 5</a> but, at the time
     of this writing, it is still not widely supported and you have more chance
     to encounter DWARF4 in the wild than DWARF5. Anyway both are pretty close
@@ -35,7 +36,7 @@
     left by the official documentation which is, nevertheless, very complete.
   </p>
   <p>
-    As you dwelve into the DWARF format/standard it is important to keep in mind
+    As you delve into the DWARF format/standard it is important to keep in mind
     that one of the main design goal of DWARF is to consume as little as
     possible of space. A lot of the design decisions made by the standard
     only make sense if you realize that every byte saved counts.
@@ -59,7 +60,7 @@
     zig build-lib add.zig -target wasm32-freestanding -dynamic
   </code></pre>
   <p>
-    You can then have a look at the DWARF symbol with the dwarfdump tool with:
+    You can then have a look at the DWARF symbol with the <b>dwarfdump</b> tool with:
   </p>
   <pre><code class="bash">
     dwarfdump -debug-info -debug-line --recurse-depth=0 add.wasm
@@ -117,7 +118,7 @@
       <li><b>.debug_line</b>:
       Described in chapter 6.2 of the information format document, this section
       is pretty wild. It basically contains a program for a state machine to
-      reconstruct a correspondance between the original source code and the
+      reconstruct a correspondence between the original source code and the
       machine instructions present in the executable. It's sound scary but its
       manageable.
       </li>
@@ -180,7 +181,7 @@
   </pre>
   <p>
     In the previous section we've seen how a custom section header is decoded.
-    Immediatly following the header, we will find the root node of our DIE tree
+    Immediately following the header, we will find the root node of our DIE tree
     which is a compilation unit. Indeed, at the top of the source code hierarchy
     is the source file... It starts with the CU's length, here 0x57D. Then the
     DWARF version on 2 bytes followed by the offset in the abbreviation table.
@@ -332,8 +333,8 @@
 [...]
   </pre>
   <p>
-    Next time, we will have a look at the <b>.debug_line</b> section and
-    implement a little virtual machine interpreting a binary domain specific
-    language! Yep.
+    <a class="visible-link" href=blog-entry.html?article=20220910-DWARF-line-program.html>Next time</a>,
+    we will have a look at the <b>.debug_line</b> section and implement a little
+    virtual machine interpreting a binary domain specific language! Yep.
   </p>
 </div>
