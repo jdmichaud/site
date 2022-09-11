@@ -72,7 +72,7 @@ onmessage = function(event) {
   <p>
     Another important point is the fact that the worker code has to live in a
     separate Javascript file. For people delivering encapsulated components, this
-    might be a showstopper or at least a pesky requirements to satisfy. Why not
+    might be a show-stopper or at least a pesky requirements to satisfy. Why not
     provide a function to be executed asynchronously. But worry not, there is a
     workaround to this.
   </p>
@@ -87,7 +87,7 @@ onmessage = function(event) {
   <h3>A better interface</h3>
   <p>
     As we have seen, the Web Worker interface, though powerful can be a little
-    awkward to use. Moreover, as any good gentleperson these days, we fancy
+    awkward to use. Moreover, as any good gentle person these days, we fancy
     ourselves to be Typescript developers. Type safety is our creed. So we will
     try to address some of those points while reducing complexity and
     improving type safety.
@@ -98,7 +98,7 @@ onmessage = function(event) {
     external script to use a Worker??". Indeed, in Javascript, functions are
     first class citizens. There are used everywhere. Why not provide a function
     to our worker? I don't pretend to know the rational of that design choice made
-    by the standardisation bodies of the Web ; My guess is that it would prevent
+    by the standardization bodies of the Web ; My guess is that it would prevent
     developer to have the impression that the function can access closure from
     the Web Worker which is of course impossible. Isolating the worker code
     inside a separate script might make that clearer. Still, it's awkward...

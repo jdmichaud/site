@@ -9,11 +9,11 @@
     most importantly master.
   </p>
   <p>
-    Since the 80s, as complexity of the development environement grew, no
+    Since the 80s, as complexity of the development environment grew, no
     solution was proposed to simplify and streamline the developer's experience.
     When I started my career, in 2005, I joined a team that was still living the
     90s life. Proprietary version control system, that would require the
-    intervention of multiple support team to onboard to. Dependencies installed
+    intervention of multiple support team to on-board to. Dependencies installed
     manually from CDs ! A full set of environment variables and software to
     configure and install. It would takes weeks for a newcomer to have a fully
     working development environment. And very few team members, except the
@@ -30,7 +30,7 @@
     dependencies) and what what needed to actually run the software, the
     dependencies. From now on, a project could specify, in a human readable way,
     what tools (with their version) and what software factory steps are needed
-    to produce your project artefact and what libraries are needed to use this
+    to produce your project artifact and what libraries are needed to use this
     artifact. This file, called <tt>package.json</tt> was standardized and
     would be a convention for all web based development project. All those
     dependencies would be downloaded from a central repository (of course
@@ -41,7 +41,7 @@
     Of course, initially the solution was immature. You were still needed to
     play around with some rough edges (i.e. grunt/gulp) to get your software
     factory moving but as of today, npm can be fully leveraged to pilot that
-    facotry in a simple and transparent manner.
+    factory in a simple and transparent manner.
   </p>
   <p>
     Let's take a simple example. You write a project in typescript. You need to
@@ -112,7 +112,7 @@
     a developer ready in the time it takes to install <tt>git</tt> and
     <tt>npm</tt>. The gain in productivity is enormous. Also, note that all this
     tooling is useless to the user of your software and <tt>npm</tt> will
-    carefuly avoid installing the development dependencies when a user of your
+    carefully avoid installing the development dependencies when a user of your
     package request it. It will however install the "dependencies" which are the
     library your software needs to run properly.
   </p>
@@ -124,9 +124,9 @@
     is, you will need to work a little harder and setup some proxy to it like <a
     visible-link href="https://jfrog.com/artifactory/">artifactory</a>, but this
     is a one time effort for which the benefits are obvious. Tools and versions
-    are explcitely defined in a human readable way. Build, test and packaging
+    are explicitly defined in a human readable way. Build, test and packaging
     steps are documented by their own code in a conventional way and the
-    software factory is consistently implemented accross all of your projects.
+    software factory is consistently implemented across all of your projects.
   </p>
   <p>
     Another caveat of course is that this solution is not universal. It applied

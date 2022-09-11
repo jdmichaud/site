@@ -23,7 +23,7 @@ x.fillRect(6+2*X,2*Y,2,2)&x.fillRect(6-2*X,2*Y,2,2):r+=s.charCodeAt(i-28,x.fillS
   <p>
 
     We will try to analyse it here. Why do it? Because it is absolutely
-    useless and as a consequence, extemely urgent to do so. First of all, for
+    useless and as a consequence, extremely urgent to do so. First of all, for
     those who haven't tried it, it will generate an avatar depending on your
     username. Usernames being unique, every username will have a unique
     avatar. There is no random number being used here, it's all procedural
@@ -209,7 +209,7 @@ function avatar(s) {
   <p>
 
     So once we've understood that we are only deciding what to do with half of
-    7x7 canvas (including the central column), we realise that we get
+    7x7 canvas (including the central column), we realize that we get
     (7x4)<sup>2</sup> different avatars. The rest 7x3 pixels being a mirrors
     of the first 7x3.
 
@@ -235,15 +235,14 @@ if (i &gt;= 28) {
 
   <p>
 
-    I have inverted the condition as well so that the clause are executed in
-    the chronological order. First, `i` is greater than 28 obviously and we
-    will then start by scanning (with `charCodeAt`) the username characters
-    and use them to intialize r. It means that for each username, r will end
-    up being initialized to a unique value. This is our seed. Then
-    `fillStyle` is called repeateadly to initialize a color which whill be
-    unique depending on r. The multiple calls are useless, only the last one
-    matter, but I guess there was no avoiding multiple calls in order to
-    limit the code size.
+    I have inverted the condition as well so that the clause are executed in the
+    chronological order. First, `i` is greater than 28 obviously and we will
+    then start by scanning (with `charCodeAt`) the username characters and use
+    them to initialize <i>r</i>. It means that for each username, <i>r</i> will end up
+    being initialized to a unique value. This is our seed. Then `fillStyle` is
+    called repeatedly to initialize a color which will be unique depending on r.
+    The multiple calls are useless, only the last one matter, but I guess there
+    was no avoiding multiple calls in order to limit the code size.
 
   </p>
 
@@ -312,18 +311,12 @@ for (let i = 0; i < 100000; ++i) {
 }
 a: Array(8) [ 12667, 12440, 12490, 12460, 12637, 12582, 12171, 12545 ]
   </code></pre>
-
   <p>
-
     The center of the avatar will probably contain more "on" pixels, due to
     the value of X being at its max there. Same thing for the bottom of the
     avatar.
-
   </p>
-
   <p>
     Anyway, nice little exercise. Congrats to the author. back to work!
   </p>
-
-
 </div>

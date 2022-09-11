@@ -5,15 +5,15 @@
     microprocessors and which purpose is to accelerate the processing of data. A
     CPU is a data processing machine. It will transform data using instructions
     to produce a useful result like rendering an image in a game or training a
-    neural network. As in eveything in life, speed is of the essence, then
+    neural network. As in everything in life, speed is of the essence, then
     executing those instructions as fast as possible is the holy grail of CPU
     designers. But they are alternative to designing ever faster CPU: designing
-    CPU that can process data in parallel. Intead of having to repeat an
+    CPU that can process data in parallel. Instead of having to repeat an
     instruction multiple time on a the multiple data, you execute that instruction
     once on multiple data.
   </p>
   <p>
-    Let's say you write a rendering engine which uses a log of linear algerbra
+    Let's say you write a rendering engine which uses a log of linear algebra
     operations and you want to add two vectors. You could write something like
     this:
   </p>
@@ -193,7 +193,7 @@ int main() {
   </code></pre>
   <p>
     But what if we want to use newer instructions? With wider vectors? For
-    example because we write specialized software running on controled
+    example because we write specialized software running on controlled
     environment where we know the CPU will provide more recent instruction sets.
     Let's activate AVX instructions using the <b>-mavx</b> switch with gcc:
   </p>

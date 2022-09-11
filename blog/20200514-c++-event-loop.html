@@ -13,7 +13,7 @@
     most of the time, will be outsourced on a server somewhere hundreds or
     thousands kilometers away. Every HTTP call and, more generally, every
     function call that will take time shall be performed asynchronously, so that
-    your UI is availalble to the user and is not being bog down by the rest of
+    your UI is available to the user and is not being bog down by the rest of
     your application. You will be tempted to use threads to solve that problem.
     But if you ever worked with multi-threaded code, you should probably
     know how hard it is to get it right. A lot of subtle and easily reproducible
@@ -29,7 +29,7 @@
     request to a local storage, computing a SHA-1 hash, etc) will be made
     asynchronous. The browser might process it using multi-threaded code (or
     not, this is entirely an implementation detail) and will give back the CPU
-    to you immedialy and will generate an event when the answer is ready for the
+    to you immediately and will generate an event when the answer is ready for the
     Javascript caller. This design is explained in detail on this <a class="visible-link"
     href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/EventLoop">Mozilla
     Developer Network</a> page, which does a good job at distinguishing the
@@ -58,8 +58,8 @@
   </p>
   <p>
     Thanks to the event loop, complexity is being reduced by a design pattern,
-    systemizing the management of asynchonous event and offering a simple and
-    clean api to the user to manage that complexity.
+    systematizing the management of asynchronous event and offering a simple and
+    clean API to the user to manage that complexity.
   </p>
   <h4>A toy implementation in C++</h4>
   <p>

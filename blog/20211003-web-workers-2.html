@@ -7,9 +7,9 @@
     real use case.
   </p>
   <p>
-    Traditionally, web pages are only front ends to remote applications. You might
-    be interfacing with the browser but most of the heavy lifting is done on
-    the backend. Fetching and processing data is traditionally reserved to
+    Traditionally, web pages are only front ends to remote applications. You
+    might be interfacing with the browser but most of the heavy lifting is done
+    on the backend. Fetching and processing data is traditionally reserved to
     the powerful servers. But as the web is evolving, we see more and more long
     running web applications performing task that used to be devolved to heavy
     clients.
@@ -58,7 +58,7 @@
     would need to retrieve the pixels and send them over to the workers, which
     would imply copying and then retrieve the result which again result in a
     copy. To take the example of our 1024x1024 canvas from earlier, this means
-    transfering 1024 x 1024 x 4 (4 bytes per pixel for RGBA) = 4 MB, twice !
+    transferring 1024 x 1024 x 4 (4 bytes per pixel for RGBA) = 4 MB, twice !
   </p>
   <p>
     This will take some time. And we are talking about a medium size image here.
@@ -262,7 +262,7 @@ python3 SimpleHTTPServerWithCORS3.py
     you can see, the function that the worker is going to accomplish is pretty
     basic and useless. Go through its assigned portion of the shared array and
     increment the pixel values (keeping the alpha channel to 255). Again, this is
-    pretty useless but it serves well as an erzats of what a real processing
+    pretty useless but it serves well as an ersatz of what a real processing
     would do. Note line 25 how we set the value of the 4 channels in one write
     instructions. This will significantly speed up the process.
   </p>
@@ -272,9 +272,9 @@ python3 SimpleHTTPServerWithCORS3.py
     be beneficial to have those two numbers different but conceptually, they
     are, so we'll keep them separate for experimentation purpose. Line 33 might
     appear cryptic, but what we are doing is not rocket science. We are creating
-    an array of parameters to our workers. Each invokation to a worker will
+    an array of parameters to our workers. Each invocation to a worker will
     require array where to write, the starting point and the number of pixels to
-    change. These 3 numbers are packed in an array and multiple invokation means
+    change. These 3 numbers are packed in an array and multiple invocation means
     multiple parameters arrays. It will look like this:
   </p>
   <pre><code class="typescript">
@@ -291,7 +291,7 @@ python3 SimpleHTTPServerWithCORS3.py
     Looking at the result, you will notice that copying the pixels back to
     ImageData and putting the data into the canvas is actually pretty costly. On
     Firefox or Chrome, it will take ~20ms on my machine. So you can forget about
-    those mytical 60fps framerate but let's not forget we are dealing with more
+    those mythical 60fps framerate but let's not forget we are dealing with more
     than 16 millions pixels here.
   </p>
   <p>

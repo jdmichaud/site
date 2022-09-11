@@ -9,7 +9,7 @@
     details of how a DICOM file comes alive and become an actual image. But this
     was only a slice of a volume. In this series we will understand how DICOM
     files come together to create an actual three dimensional volume. But first,
-    a little reminder of some basic math principles. If your confortable with that,
+    a little reminder of some basic math principles. If your comfortable with that,
     you can jump to <a href="#patient-coordinate-system" class="visible-link">
     the second half of this article</a>.
   </p>
@@ -74,7 +74,7 @@
   <p>
     If you memory of linear algebra are a little fuzzy, I advise you to have a
     look at <a class="visible-link" href="http://mathdown.novidee.com/toHtml?url=https://gist.githubusercontent.com/jdmichaud/7ff72cc2a9f19e93ff47ee143232ca5c/raw/linalg.md">
-    this refresher I sumed up</a>.
+    this refresher I summed up</a>.
   </p>
   <p>
     To generalize, if our vector is expressed in the base Ba = [b1, b2], then
@@ -127,7 +127,7 @@
     translation. The dangling 1 in the bottom right does the trick. But for this
     matrix to work, you will have to manipulate particular kind of points. They,
     too, will have a dangling 1 and it will used to apply the translation after
-    the rotation/skeweing. If the last element of your point is 0, not 1, then
+    the rotation/skewing. If the last element of your point is 0, not 1, then
     the translation is not applied and what you have is not a point, but a vector
     indeed:
   </p>
@@ -138,18 +138,18 @@
   <p>
     Now all this works in 2D as well as in 3D or anyD for that matter. You just
     need to extend the dimensions of the matrices, vectors and points you
-    manipulate. From a mathemical point of view, all theses rules apply the same
+    manipulate. From a mathematical point of view, all theses rules apply the same
     in any dimension and only your memory space is the limit.
   </p>
   <h4 id="patient-coordinate-system">The patient coordinate system</h4>
   <p>
-    Now that the math is out of the way, let's dwelve back into DICOM. If we
+    Now that the math is out of the way, let's go back to DICOM. If we
     deal with 3D data, as we suppose we are, we need to position them in space.
     The convention DICOM follows is that the "canonical" coordinate system used
     is aligned with the patient. It is the <a class="visible-link"
     href="http://dicom.nema.org/medical/dicom/current/output/chtml/part03/sect_C.7.6.2.html">
     "patient coordinate system"</a>. If you were to be standing, you legs
-    together, arms appart pointing to your left and right, and your eyes fixed
+    together, arms apart pointing to your left and right, and your eyes fixed
     to the horizon, the X-axis is your arms, the Y-axis is the direction of your
     gaze and the Z-axis you body. So this gives us the axis but not their
     direction. This is where some vocabulary is needed. In medicine, Left and
@@ -235,7 +235,7 @@
     So how do we extend the slice coordinate to the volume coordinate system,
     including the Z axis? Well by first noting again that we are treating a
     particular case, which is the most common case: aligned slices. Indeed, each
-    slice is independent, there is no garantee that slices are parallel to each
+    slice is independent, there is no guarantee that slices are parallel to each
     other or aligned. Some system will produce non-parallel slice for CBCT
     acquisition for example, or when the volume is skewed with respect to the
     axis of the slice. Let's not worry about that here. Our slices are
@@ -333,8 +333,8 @@
     efficient computation aside. The base of our coordinate system will
     encompass the whole camera plane. It means that between 0 and 1 you will
     live in that segment. Outside of that range, you are out of the segment.
-    This greatly simplified the explaination but will lead us to perform some
-    unecessary costly floating point arithmetic, especially division, but
+    This greatly simplified the explanation but will lead us to perform some
+    unnecessary costly floating point arithmetic, especially division, but
     efficiency is not the point of this series of articles anyway.
   </p>
   <div style="display:flex; flex-direction: column">

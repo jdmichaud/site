@@ -123,7 +123,7 @@
   </pre>
     So: 9158 1..1 52. Now that is a strange date. But remember that DICOM does
     not specify an <a href="https://en.wikipedia.org/wiki/Endianness" class="visible-link">
-    endianess</a>. Your file can be little or big edian and in our case, it
+    endianess</a>. Your file can be little or big endian and in our case, it
     probably is little-endian:
   <div style="display:flex; flex-direction: column">
     <div style="display:flex; justify-content: center;"><img src="../assets/Little-Endian.svg" style="width: 40%;"></img></div>
@@ -187,7 +187,7 @@ function nextTag(dataset, offset) {
 }
 
 function getTag(dataset, tag) {
-  // Convert the convenint string format to a binary array.
+  // Convert the convenient string format to a binary array.
   // Flipping the element to match the endianess of the DICOM file.
   const binTag = [
     parseInt(tag.substring(2, 4), 16),
@@ -306,7 +306,7 @@ function twoBytesToNumber(arrayBuffer) {
     href="https://en.wikipedia.org/wiki/Hounsfield_scale" class="visible-link">
     Hounsfield scale</a>. Certain value on
     this scale represent the density of well known material. -1000 is the
-    density of Air, cancellous bone is between 300 and 400 and muscle is between 35
+    density of Air, cancerous bone is between 300 and 400 and muscle is between 35
     and 55. DICOM defines a way to convert the internal opaque representation to
     Hounsfield Unit (HU) called the Modality LUT. You will hear a lot about
     <a href="https://en.wikipedia.org/wiki/Lookup_table" class="visible-link">LUT
@@ -331,7 +331,7 @@ function twoBytesToNumber(arrayBuffer) {
     range to 8 bits will, inevitably, result in information loss. But that is not
     necessarily a problem. Because doctors will only want to see certain types
     of tissue. Even if your range can express values from air (-1000) to brass
-    (+30000), you might be only interested in lung tissu (-700 to -600) or grey
+    (+30000), you might be only interested in lung tissue (-700 to -600) or gray
     matter (+37 to +45). In order to "zoom" into that value range and map it to
     the display range (0-255) you will apply a windowing technique. Windowing is
     a way to linearly map a range to another.
@@ -351,7 +351,7 @@ function twoBytesToNumber(arrayBuffer) {
     width defines how much of the input is mapped.
   </p>
   <p>
-    Like the modality LUT, the Value Of Intereset (VOI) LUT can take different
+    Like the modality LUT, the Value Of Interest (VOI) LUT can take different
     form: an actual Look Up Table (called sequence), a sigmoid function or the
     most common case, a simple linear function. The illustration above is for
     a linear function which is entirely defined by the following two parameters:
@@ -401,7 +401,7 @@ function twoBytesToNumber(arrayBuffer) {
   </pre>
   <p>
     The array is represented by values separated by '\\'. That is why we split
-    by '\\'. In our case, we immediatly select the first value to stay simple.
+    by '\\'. In our case, we immediately select the first value to stay simple.
     In practice, the different values correspond to different profiles, meaning
     different type of "views" you can offer. The different values of the array
     are explained by the field (0028,1055) Window Center & Width Explanation
@@ -413,7 +413,7 @@ function twoBytesToNumber(arrayBuffer) {
   </p>
   <p>
     We've loaded the pixels and the parameters we need. Now we will apply the
-    modality LUT, which will give us hounfield units, and then the VOI LUT, which
+    modality LUT, which will give us hounsfield units, and then the VOI LUT, which
     will give us greyscale values ready to be loaded onto a canvas:
   </p>
     <pre><code class="javascript">
