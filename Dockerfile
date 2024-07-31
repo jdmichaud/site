@@ -1,4 +1,4 @@
-FROM nginx:1.13.8
+FROM nginx:1.27.0
 
 RUN apt update
 RUN apt install -y curl xz-utils less
