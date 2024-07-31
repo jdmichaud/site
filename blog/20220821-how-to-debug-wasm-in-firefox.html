@@ -108,7 +108,7 @@
   <p>
     Then you start getting to the meat of the WASM file: <a class="visible-link" href=https://webassembly.github.io/spec/core/binary/modules.html>the sections</a>.
     The WASM binary is a succession of sections each with a type and a size. The
-    type tells you what the section contain and the size tells you the amount of
+    type tells you what the section contains and the size tells you the amount of
     bytes it occupies in the file. Here, the section starts right after the WASM
     version indicated by the cursor:
     <pre><code>
@@ -137,8 +137,9 @@
   <p>
     Earlier I mentioned that we are going to ignore the WASM sections and focus
     on the custom sections. That's because this is where the DWARF sections live.
-    DWARF is not defined by the WASM specs. DWARF pre-dates WASM and could be found,
-    up to now, first in ELF executables. How can we recognized DWARF section then?
+    DWARF is not defined by the WASM specs. DWARF pre-dates WASM and can already
+    be found in ELF executables for example. How can we recognized DWARF section
+    then?
   </p>
   <p>
     Within the WASM custom section (those with Type ID 0), we will find the name
