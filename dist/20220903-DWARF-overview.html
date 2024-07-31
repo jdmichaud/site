@@ -1,0 +1,386 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <link rel="icon" type="image/png" href="/favicon.png">
+  <title>JD's tech website</title>
+  <link rel="stylesheet" type="text/css" href="/style.css"></style>
+  <style type="text/css">
+    p {
+      text-align: justify;
+    }
+
+    tt {
+      background-color: lightgrey;
+      font-size: 16px;
+    }
+
+    .visible-link {
+      color: blue;
+    }
+  </style>
+  <!-- highlight.js -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/10.0.3/styles/default.min.css">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/10.0.3/highlight.min.js"></script>
+  <script>
+    window.onload = () => {
+      hljs.initHighlighting();
+    };
+  </script>
+</head>
+<body>
+  <div class="site-container">
+    <div class="container">
+      <div class="header">
+        <h1><a href="/">JD's tech website</a></h1>
+        <hr>
+        <div class="header-link">
+          <a href="/about.html">about</a>
+          <a href="/contact.html">contact</a>
+        </div>
+      </div>
+    <div></div>
+<div>
+  <h2 class="title">Use DWARF to debug WASM in the browser (part 1)</h2>
+  <h3>The DWARF standard and how to extract information for fun and profit</h3>
+  <p>
+    In our <a class="visible-link" href=blog-entry.html?article=20220821-how-to-debug-wasm-in-firefox.html>previous article</a>
+    we have seen how WASM files were structured in sections and how to extract
+    them. In this article, we will go a little deeper into what DWARF is and how
+    it is encoded in the WASM file.
+  </p>
+  <p>
+    <a class="visible-link" href=https://en.wikipedia.org/wiki/DWARF>DWARF</a>
+    is a standard describing how debugging symbol must be written in order for a
+    debugger to help get insight into how a computer is executing a program. It
+    describes the relationship between machine instruction and original code (as
+    written in the programming language used to produce the program), how the
+    code is structured, how the variables are stored etc. It's present in any
+    <a class="visible-link" href=https://upload.wikimedia.org/wikipedia/commons/e/e4/ELF_Executable_and_Linkable_Format_diagram_by_Ange_Albertini.png>ELF executables</a>
+    that was build with debug symbols with a modern tool. I will not go into the
+    historical details of DWARF as you can already find a nice introduction in
+    <a class="visible-link" href=https://dwarfstd.org/doc/Debugging%20using%20DWARF-2012.pdf>Micheal Eager's introduction</a>
+    which goes into the when and why. We will focus here on how DWARF is encoded
+    in the WASM file and how we can extract useful data for debugging. The final
+    authority on everything DWARF is the DWARF Debugging Information Format
+    Committee. Their output is <a class="visible-link" href=https://dwarfstd.org/doc/DWARF4.pdf>a precious document</a>
+    that I have been referring to a lot. This is for version 4 of DWARF. The
+    <a class="visible-link" href=https://dwarfstd.org/doc/DWARF5.pdf>latest version is 5</a> but, at the time
+    of this writing, it is still not widely supported and you have more chance
+    to encounter DWARF4 in the wild than DWARF5. Anyway both are pretty close
+    and I guess knowing version 4 will already bring a long way to master
+    version 5.
+  </p>
+  <p>
+    I shall point out that, in the process of understanding DWARF, in addition
+    to the aforementioned wiki page and documentation, I also use <a class="visible-link" href=https://github.com/ziglang/zig/blob/6072226/lib/std/dwarf.zig>zig source code</a>
+    which was a huge help to get me out of local minimum of understanding I was
+    left by the official documentation which is, nevertheless, very complete.
+  </p>
+  <p>
+    As you delve into the DWARF format/standard it is important to keep in mind
+    that one of the main design goal of DWARF is to consume as little as
+    possible of space. A lot of the design decisions made by the standard
+    only make sense if you realize that every byte saved counts.
+  </p>
+  <h3>Example project</h3>
+  <p>
+    In order to follow the example, you can produce a simple WASM file using the
+    zig compiler. Create the file called <i>add.zig</i>:
+  </p>
+  <pre><code class="C">
+    const std = @import("std");
+
+    export fn add(a: i32, b: i32) i32 {
+      return a + b;
+    }
+  </code></pre>
+  <p>
+    And compile it with:
+  </p>
+  <pre><code class="bash">
+    zig build-lib add.zig -target wasm32-freestanding -dynamic
+  </code></pre>
+  <p>
+    You can then have a look at the DWARF symbol with the <b>dwarfdump</b> tool with:
+  </p>
+  <pre><code class="bash">
+    dwarfdump -debug-info -debug-line --recurse-depth=0 add.wasm
+  </code></pre>
+  <h3>DWARF sections</h3>
+  <p>
+    As we have see in the <a class="visible-link" href=blog-entry.html?article=20220821-how-to-debug-wasm-in-firefox.html>previous article</a>,
+    a WASM file is made of sections. Below are the sections of a simple wasm file:
+  </p>
+  <pre>
+      type starts=0x0000000a size=0xc
+  function starts=0x00000018 size=0x3
+     table starts=0x0000001d size=0x5
+    memory starts=0x00000024 size=0x3
+    global starts=0x00000029 size=0x8
+    export starts=0x00000033 size=0x10
+      code starts=0x00000046 size=0xd9
+      data starts=0x00000121 size=0x24
+    custom starts=0x00000148 size=0x58d   .debug_info
+    custom starts=0x000006d8 size=0x295   .debug_pubtypes
+    custom starts=0x0000096f size=0x28    .debug_loc
+    custom starts=0x00000999 size=0x26    .debug_ranges
+    custom starts=0x000009c2 size=0x175   .debug_abbrev
+    custom starts=0x00000b3a size=0x12e   .debug_line
+    custom starts=0x00000c6b size=0x54b   .debug_str
+    custom starts=0x000011b9 size=0x43c   .debug_pubnames
+    custom starts=0x000015f7 size=0x48    name
+    custom starts=0x00001641 size=0x1a    producers
+  </pre>
+  <p>
+    Each line here is a section. Each section starts somewhere in the binary
+    file and have a size. Their type is the first byte of the section. The first
+    sections are the WASM sections. Each have their special meaning and
+    purposes. In our example, after the data section come the custom sections.
+    Each of these custom sections have names which identify their purposes. As
+    you can see, several of them starts with <b>.debug</b>. These are the DWARF
+    sections.
+  </p>
+  <p>
+    We will not go into the details of all those sections but we will focus
+    particularly on:
+    <ul>
+      <li><b>.debug_str</b>:
+      this sections is fairly simple. It is a concatenation of zero-terminated
+      strings. It is used by DWARF as a store for identifiers and will be
+      pointed to by reference by other sections, especially .debug_info.</li>
+      <li><b>.debug_abbrev</b>:
+      Described in chapter 7.5.3 of the information format document, the
+      abbreviation table is one of the cost cutting measure used to ensure the
+      lowest possible redundancy in the data stored in the custom sections. This
+      section contains a dictionary of structure definition used in the
+      .debug_info section. Basically a list of identifiers for which is
+      associated a list of tags/values representing field names and their type.
+      </li>
+      <li><b>.debug_line</b>:
+      Described in chapter 6.2 of the information format document, this section
+      is pretty wild. It basically contains a program for a state machine to
+      reconstruct a correspondence between the original source code and the
+      machine instructions present in the executable. It's sound scary but its
+      manageable.
+      </li>
+      <li><b>.debug_info</b>:
+      Described in chapter 7.5 (alongside the abbreviation table), the
+      .debug_info section is the main course of the DWARF meal. This is where
+      you will extract the "Debug Information Entries" or DIEs which are data
+      structure describing the various debug symbols.
+      </li>
+    </ul>
+  </p>
+  <h4>Debug Information Entries</h4>
+  <p>
+    Debug information entries (DIE) are important data structures in the DWARF
+    standard. Each DIE is a node of a tree of DIEs. As described by the standard:
+    <pre><i>
+      A variety of needs can be met by permitting a single debugging information
+      entry to “own” an arbitrary number of other debugging entries and by
+      permitting the same debugging information entry to be one of many owned by
+      another debugging information entry. This makes it possible, for example,
+      to describe the static block structure within a source file, to show the
+      members of a structure, union, or class, and to associate declarations
+      with source files or source files with shared objects.
+    </i></pre>
+    So DIEs are the alpha and omega of the DWARF symbols. They are present in
+    the <b>.debug_info</b> sections and represent everything that you can find
+    in a program: compilation units (files), variables, functions, enum members,
+    etc. They are arranged as a tree and each of them has a type. The type will
+    correspond to a data structure described in the abbreviation table.
+  </p>
+  <pre>
+0x000000f5:   DW_TAG_variable
+                DW_AT_name      ("os")
+                DW_AT_type      (0x00000104 "std.target.Target.Os")
+                DW_AT_decl_file ("/path/to/builtin.zig")
+                DW_AT_decl_line (18)
+                DW_AT_linkage_name      ("os")
+  </pre>
+  <p>
+    For example, this is a DIE as represented by the <b>dwarfdump</b> tool. We
+    can see that this DIE is a variable of type <i>std.target.Target.Os</i> (the
+    language is zig here). We can see the location of its declaration and its
+    name.
+  </p>
+  <p>
+    For our purpose, the DIE we will mainly focus on is the
+    <i>DW_TAG_compile_unit</i>. A compilation unit (cu) is a source file. And if
+    we want to extract sourcemap information, files are at the basis of our
+    analysis.
+  </p>
+  <h4>Deep dive in the .debug_info and .debug_abbrev section</h4>
+  <p>
+    Let's have look at how the <b>.debug_info</b> and <b>.debug_abbrev</b>
+    section look like:
+  </p>
+  <pre>
+    00 8D 0B  0B 2E 64 65  62 75 67 5F  69 6E 66 6F  7D 05 00 00  04 00 00 00  00 00 04 01
+    ^^ ^^^^^  ^^ ^^ ^^ ^^  ^^ ^^ ^^ ^^  ^^ ^^ ^^ ^^  ^^ ^^ ^^ ^^  ^^ ^^ ^^ ^^  ^^ ^^ ^^ ^^
+    ID 0x58D  11  .  d  e   b  u  g  _   i  n  f  o  unit length  v4 offset ab table sz AC
+  </pre>
+  <p>
+    In the previous section we've seen how a custom section header is decoded.
+    Immediately following the header, we will find the root node of our DIE tree
+    which is a compilation unit. Indeed, at the top of the source code hierarchy
+    is the source file... It starts with the CU's length, here 0x57D. Then the
+    DWARF version on 2 bytes followed by the offset in the abbreviation table.
+    This will be use to seek, in the abbreviation table, the information related
+    to the structure of this CU. Then on one byte we get the size of the address
+    (sz) on the target machine. This is not useful for us now, let's just ignore
+    it. Finally, we find the abbreviation code (AC) of the root DIE of this CU.
+  </p>
+  <p>
+    So let's have a look at how this abbreviation code finds its meaning in the
+    abbreviation table. Here is the content of the .debug_abbrev:
+  </p>
+  <pre>
+    00  F5 02 0D 2E  64 65 62 75  67 5F 61 62  62 72 65 76  01 11 01 25  0E [.. ..] 55 17  00 00
+    ^^  ^^ ^^ ^^ ^^  ^^ ^^ ^^ ^^  ^^ ^^ ^^ ^^  ^^ ^^ ^^ ^^  ^^ ^^ ^^                       ^^ ^^
+    ID  0x175 13  .   d  e  b  u   g  _  a  b   b  r  e  v  AC TG CH                        END
+  </pre>
+  <p>
+    Here, the first abbreviation code is 0x01, right after the custom section
+    name. So as promised by the information we got from the .debug_info section,
+    at offset 0x0000 of the <b>.debug_abbrev</b> section we get the information
+    for the abbreviation code 0x01 (AC). Following the code we get the Tag (TG).
+    In the standard, chapter 7.5.4 Figure 18 we get the meaning of this tag:
+  </p>
+  <pre>
+    DW_TAG_Compilation_Unit............ 0x11
+  </pre>
+  <p>
+    No surprise there, the first DIE (the root) is a compilation unit. After the
+    tag comes one byte indicating if this DIE has children or not (CH). As
+    explained above, DIE are arranged as a tree. A node DIE has children and a
+    LEAF die doesn't (like a variable for example). Here, our CU has children,
+    which is expected unless the source file was empty... Then, after the
+    children byte comes a series of attribute specification. Each specification
+    is a tuple of unsigned LEB128 which represent the name and type of the
+    attribute. The list is terminated by two 0x00 bytes. In our case, the CU
+    will be represented this way:
+  </p>
+  <pre>
+0x0000000b: DW_TAG_compile_unit
+              DW_AT_producer    ("zig 0.10.0")
+              DW_AT_language    (DW_LANG_C99)
+              DW_AT_name        ("main")
+              DW_AT_stmt_list   (0x00000000)
+              DW_AT_comp_dir    (".")
+              DW_AT_GNU_pubnames        (true)
+              DW_AT_low_pc      (0x00000000)
+              DW_AT_ranges      (0x00000000
+                 [0x00000002, 0x0000002e)
+                 [0x00000030, 0x000000d9))
+  </pre>
+  <p>
+    So to come back to our abbreviation table, right after the children byte
+    came 0x25. And looking at the attribute encoding (Figure 20 of the same
+    chapter) we see that:
+  </p>
+  <pre>
+    DW_AT_producer............ 0x24
+  </pre>
+  <p>
+    0x0E corresponds to the type of the field which, according to Figure 21 of
+    the same chapter is:
+  </p>
+  <pre>
+    DW_FORM_strp............ 0x0E
+  </pre>
+  <p>
+    The type DW_FORM_strp indicates a string that must be found in the
+    <b>.debug_str</b> section. In order to know where, we must go back to the
+    <b>.debug_info</b> section which contains the actual value of the field:
+  </p>
+  <pre>
+    01  33 05 00 00  0C 00 65 01
+    ^^  ^^ ^^ ^^ ^^
+    AC  offset in .debug_str
+  </pre>
+  <p>
+    What the DW_FORM_strp definition (7.5.4 Attribute Encodings) tells us is
+    that the next 4 bytes will get us an offset in the <b>.debug_str</b>
+    section. And sure enough, at this offset we will find: "zig 0.10.0".
+  </p>
+  <h4>A word on the tree structure</h4>
+  <p>
+    Remember that we said the DIE where structured as a tree? How does this tree
+    is represented? Well, the children byte will indicate if the DIE has
+    children. If it doesn't, then when reading the next DIE we can consider that
+    it will be the sibling of the DIE we just read. If it has children, all the
+    following DIE will be considered the children of the DIE we just read unless
+    a 0x00 is encountered for an abbreviation code. In that case, we consider
+    than the list of children of the parent DIE is finished. So, if we were to
+    represent a DIE with an abbreviation code of 0x05 and with children this
+    way: 0x05(1), then if we were to read a .debug_info structure this way:
+  </p>
+  <pre>
+    0x04(1) 0x12(0) 0x08(1) 0xD1(0) 0x22(0) 0x00 0x0A(0) 0x00
+  </pre>
+  <p>
+    We could conclude that the tree should look like this:
+  </p>
+  <pre>
+    0x04
+    ├─0x12
+    ├─0x08
+    │  ├─0xD1
+    │  └─0x22
+    └─0x0A
+  </pre>
+  <h3>Enough for today!</h3>
+  <p>
+    Phew, that was a big one. No need to decode the entire sections for us to
+    get the gist of it. With some back and forth between the .debug_info section
+    which gives us the structure of the tree and the data of the DIE and the
+    .debug_abbrev section which gives us the structure of the DIE, we can
+    reconstruct our DWARF data structure, which, for our example, would look like
+    this:
+  </p>
+  <pre>
+0x0000000b: DW_TAG_compile_unit
+              DW_AT_producer    ("zig 0.10.0")
+              DW_AT_language    (DW_LANG_C99)
+              DW_AT_name        ("main")
+              DW_AT_stmt_list   (0x00000000)
+              DW_AT_comp_dir    (".")
+              DW_AT_GNU_pubnames        (true)
+              DW_AT_low_pc      (0x00000000)
+              DW_AT_ranges      (0x00000000
+                 [0x00000002, 0x0000002e)
+                 [0x00000030, 0x000000d9))
+
+0x00000026:   DW_TAG_variable
+                DW_AT_name      ("zig_backend")
+                DW_AT_type      (0x00000035 "std.builtin.CompilerBackend")
+                DW_AT_decl_file ("/home/jedi/tmp/wasm-example/zig-cache/o/e17952276f8af0e0a6754aa8fc6225f8/builtin.zig")
+                DW_AT_decl_line (5)
+                DW_AT_linkage_name      ("zig_backend")
+
+0x00000035:   DW_TAG_enumeration_type
+                DW_AT_type      (0x00000086 "u64")
+                DW_AT_name      ("std.builtin.CompilerBackend")
+                DW_AT_byte_size (0x08)
+                DW_AT_decl_file ("/snap/zig/5649/lib/std/builtin.zig")
+                DW_AT_decl_line (697)
+                DW_AT_alignment (8)
+
+0x00000043:     DW_TAG_enumerator
+                  DW_AT_name    ("other")
+                  DW_AT_const_value     (0)
+
+[...]
+  </pre>
+  <p>
+    <a class="visible-link" href=blog-entry.html?article=20220910-DWARF-line-program.html>Next time</a>,
+    we will have a look at the <b>.debug_line</b> section and implement a little
+    virtual machine interpreting a binary domain specific language! Yep.
+  </p>
+</div>
+    </div>
+  </div>
+
+</body>

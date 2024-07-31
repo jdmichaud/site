@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <link rel="icon" type="image/png" href="/favicon.png">
+  <title>JD's tech website</title>
+  <link rel="stylesheet" type="text/css" href="/style.css"></style>
+  <style type="text/css">
+    p {
+      text-align: justify;
+    }
+
+    tt {
+      background-color: lightgrey;
+      font-size: 16px;
+    }
+
+    .visible-link {
+      color: blue;
+    }
+  </style>
+  <!-- highlight.js -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/10.0.3/styles/default.min.css">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/10.0.3/highlight.min.js"></script>
+  <script>
+    window.onload = () => {
+      hljs.initHighlighting();
+    };
+  </script>
+</head>
+<body>
+  <div class="site-container">
+    <div class="container">
+      <div class="header">
+        <h1><a href="/">JD's tech website</a></h1>
+        <hr>
+        <div class="header-link">
+          <a href="/about.html">about</a>
+          <a href="/contact.html">contact</a>
+        </div>
+      </div>
+    <div></div>
+<div>
+  <h3 class="title">From DICOM to MPR (Follow-up)</h3>
+  <p>
+    Many of view have asked me to show a little more than just static images of
+    the MPR rendering algorithm. So it took a little time but it's finally here!
+    Lo and behold! The MPR rendering in pure javascript. You even have a glance
+    of the WebGL rendering is second half of the video.
+  </p>
+  <div style="display:flex; flex-direction: column">
+    <div style="display:flex; justify-content: center;"><video controls autoplay src="../assets/pig-mpr.webm" style="width: 70%;"></img></div>
+    <div style="display:flex; justify-content: center;"><p style="font-size: 12px"><p>I give you: the pig!</p></div>
+  </div>
+  <p>
+    Another prototype I have been working on is the MIP (Mininum Intensity
+    Projection) algorithm, entirely in the browser in pure javascript. It's
+    pretty slow but it still show what modern browsers are capable of. Enjoy!
+  </p>
+  <div style="display:flex; flex-direction: column">
+    <div style="display:flex; justify-content: center;"><video controls autoplay src="../assets/mip.webm" style="width: 70%;"></img></div>
+    <div style="display:flex; justify-content: center;"><p style="font-size: 12px"><p>Maximum Intensity Projection</p></div>
+  </div>
+</div>
+    </div>
+  </div>
+
+</body>

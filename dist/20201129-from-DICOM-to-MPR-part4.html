@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <link rel="icon" type="image/png" href="/favicon.png">
+  <title>JD's tech website</title>
+  <link rel="stylesheet" type="text/css" href="/style.css"></style>
+  <style type="text/css">
+    p {
+      text-align: justify;
+    }
+
+    tt {
+      background-color: lightgrey;
+      font-size: 16px;
+    }
+
+    .visible-link {
+      color: blue;
+    }
+  </style>
+  <!-- highlight.js -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/10.0.3/styles/default.min.css">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/10.0.3/highlight.min.js"></script>
+  <script>
+    window.onload = () => {
+      hljs.initHighlighting();
+    };
+  </script>
+</head>
+<body>
+  <div class="site-container">
+    <div class="container">
+      <div class="header">
+        <h1><a href="/">JD's tech website</a></h1>
+        <hr>
+        <div class="header-link">
+          <a href="/about.html">about</a>
+          <a href="/contact.html">contact</a>
+        </div>
+      </div>
+    <div></div>
+<div>
+  <h3 class="title">From DICOM to MPR (part 4)</h3>
+  <p>
+    This is the fourth part of 5 parts series. Link to <a href="blog-entry.html?article=20201211-from-DICOM-to-MPR-follow-up.html" class="visible-link">part 5</a>.
+  </p>
+  <p>
+    In the previous installment of this multi-part series of articles we
+    discovered the DICOM standards and how it came to be. The way data are
+    stored according to DICOM and how these data can be extracted and
+    interpreted. We also had a look at the various coordinate systems and how to
+    hop from one to another. Now we will all put this together and render our
+    very first MPR image !
+  </p>
+
+  <h4>Final results</h4>
+  <p>
+    You can see the final result <a class="visible-link" href="/mpr">at this
+    address</a>. An empty canvas should appear on the page. Drag and drop some
+    DICOM instances on it (they should contain at least one full volume). Be
+    careful, Firefox's drag and drop is a little shaky, prefer Chrome here.
+    After a couple of seconds, a coronal view of your volume should appear.
+  </p>
+  <div style="display:flex; flex-direction: column">
+    <div style="display:flex; justify-content: center;"><img src="../assets/mpr.png" style="width: 50%;"></img></div>
+    <div style="display:flex; justify-content: center;"><p style="font-size: 12px"><p>A CT coronal view of a pig.</p></div>
+  </div>
+  <p>
+    As previously mentioned, this code aims at simplicity and readability. It
+    does not support all the DICOM variations and quirks. It will work with a
+    well-behaved DICOM format and nothing else. Moreover, it is awfully slow and
+    there are a dozen of optimization opportunities left for the reader as an
+    exercise. An implementation through WebGL is even possible. The only
+    difficulty being to transfer the volume to GPU memory, but the results are
+    impressive, even with tri-linear interpolation ! Maybe the subject of a
+    future article if popular demand is high ;)
+  </p>
+  <h4>Conclusion</h4>
+  <p>
+    Here you go. From DICOM to MPR. The journey was arduous but rewarding. In
+    order to master a technology, one must start from the beginning and be
+    ready to spend much time getting into the details but as a result you gain
+    insight allowing you to produce amazing results.
+  </p>
+</div>
+    </div>
+  </div>
+
+</body>

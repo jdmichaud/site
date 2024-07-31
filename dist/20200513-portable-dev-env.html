@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <link rel="icon" type="image/png" href="/favicon.png">
+  <title>JD's tech website</title>
+  <link rel="stylesheet" type="text/css" href="/style.css"></style>
+  <style type="text/css">
+    p {
+      text-align: justify;
+    }
+
+    tt {
+      background-color: lightgrey;
+      font-size: 16px;
+    }
+
+    .visible-link {
+      color: blue;
+    }
+  </style>
+  <!-- highlight.js -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/10.0.3/styles/default.min.css">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/10.0.3/highlight.min.js"></script>
+  <script>
+    window.onload = () => {
+      hljs.initHighlighting();
+    };
+  </script>
+</head>
+<body>
+  <div class="site-container">
+    <div class="container">
+      <div class="header">
+        <h1><a href="/">JD's tech website</a></h1>
+        <hr>
+        <div class="header-link">
+          <a href="/about.html">about</a>
+          <a href="/contact.html">contact</a>
+        </div>
+      </div>
+    <div></div>
+<div>
+  <h3 class="title">Portable development environments</h3>
+  <p>
+    The day-to-day life of a developer is that of a master of tools. Tools to
+    write, compile, link, test, package, distribute. Not unlike heavy machinery
+    which is an extension of the body, those tools are an extension of the mind
+    that allows one person to produce an enormous amount of value with limited
+    effort. But those tools can also be a bane. To install, configure, maintain and
+    most importantly master.
+  </p>
+  <p>
+    Since the 80s, as complexity of the development environment grew, no
+    solution was proposed to simplify and streamline the developer's experience.
+    When I started my career, in 2005, I joined a team that was still living the
+    90s life. Proprietary version control system, that would require the
+    intervention of multiple support team to on-board to. Dependencies installed
+    manually from CDs ! A full set of environment variables and software to
+    configure and install. It would takes weeks for a newcomer to have a fully
+    working development environment. And very few team members, except the
+    oldest, those who've been there from the start, actually knew how all this
+    was working.
+  </p>
+  <p>
+    But the advent of web technologies brought a wind of change. <tt>npm</tt>,
+    the node package manager, suddenly allowed a developer to explicitely
+    describe, in a simple json file, what are his project's dependencies and what
+    it needs to convert its source code to the final deliverable. The
+    <tt>npm</tt> people had the good idea to split the concept of dependencies
+    between what was needed to generate an artifact (the development
+    dependencies) and what what needed to actually run the software, the
+    dependencies. From now on, a project could specify, in a human readable way,
+    what tools (with their version) and what software factory steps are needed
+    to produce your project artifact and what libraries are needed to use this
+    artifact. This file, called <tt>package.json</tt> was standardized and
+    would be a convention for all web based development project. All those
+    dependencies would be downloaded from a central repository (of course
+    configurable) and you would never ever need to find the CD-Rom or even the
+    web link of the proper version of this or that tool again.
+  </p>
+  <p>
+    Of course, initially the solution was immature. You were still needed to
+    play around with some rough edges (i.e. grunt/gulp) to get your software
+    factory moving but as of today, npm can be fully leveraged to pilot that
+    factory in a simple and transparent manner.
+  </p>
+  <p>
+    Let's take a simple example. You write a project in typescript. You need to
+    transpile the source to javascript, unit test it and bundle it in a form
+    that can be easily consumed by a browser. You will first create a
+    <tt>package.json</tt> file:
+    <pre><code class="json">
+        {
+          "name": "my-project",
+        }
+    </code></pre>
+    That's it, you have a valid <tt>package.json</tt> file. Let's install what's
+    necessary to transpile your project:
+    <pre><code class="bash">
+        $ npm install --save-dev typescript
+    </code></pre>
+    You instruct <tt>npm</tt> you will need a development dependencies. This
+    development dependencies is necessary to the developer but not to the user
+    of your software. More on this later. Now your <tt>package.json</tt> looks
+    like this (version notwithstanding):
+    <pre><code class="json">
+        {
+          "name": "my-project",
+          "devDependencies": {
+            "typescript": "^3.9.2"
+          }
+        }
+    </code></pre>
+    You create a source file:
+    <pre><code class="bash">
+        $ cat > main.ts
+        function main(): void {
+          console.log('Hello world!');
+        }
+
+        window.onload = main;
+    </code></pre>
+    Now let's configure <tt>npm</tt> to build your project:
+    <pre><code class="json">
+        {
+          "name": "my-project",
+          "scripts": {
+            "build": "tsc main.ts"
+          },
+          "devDependencies": {
+            "typescript": "^3.9.2"
+          }
+        }
+    </code></pre>
+    Then build it:
+    <pre><code class="json">
+        $ npm run build
+    </code></pre>
+    Your project is built. It took a bit of effort but from now on, if any
+    developer clone your project and try to build, all they need to do is:
+    <pre><code class="json">
+        $ npm install && npm run build
+    </code></pre>
+  <p>
+    And! That! Is! It! Compared to the old ways, this is a revolution. In our
+    case, the setup is pretty simple but if you need unit test, a linter and a
+    publishing workflow, you can just describe these in the
+    <tt>package.json</tt> file. You can find a example of this <a class="visible-link"
+    href="https://github.com/jdmichaud/ts-boiler-plate/blob/master/package.json">here</a>.
+  </p>
+  <p>
+    From now on, onboarding developer is a breeze. Training aside, you can have
+    a developer ready in the time it takes to install <tt>git</tt> and
+    <tt>npm</tt>. The gain in productivity is enormous. Also, note that all this
+    tooling is useless to the user of your software and <tt>npm</tt> will
+    carefully avoid installing the development dependencies when a user of your
+    package request it. It will however install the "dependencies" which are the
+    library your software needs to run properly.
+  </p>
+  <p>
+    Now everything is not so rosy. You still need to worry about where your
+    dependencies are downloaded from. To prevent security issues or just simply
+    if you don't like to depend on a free and unreliable piece of infrastructure
+    as <a class="visible-link" href="https://registry.npmjs.org/">registry.npmjs.org</a>
+    is, you will need to work a little harder and setup some proxy to it like <a
+    visible-link href="https://jfrog.com/artifactory/">artifactory</a>, but this
+    is a one time effort for which the benefits are obvious. Tools and versions
+    are explicitly defined in a human readable way. Build, test and packaging
+    steps are documented by their own code in a conventional way and the
+    software factory is consistently implemented across all of your projects.
+  </p>
+  <p>
+    Another caveat of course is that this solution is not universal. It applied
+    only to project based on web technologies. Were you to develop software in
+    C++ or python, you would have to find equivalent tools, <b>if you can</b>.
+    In that regards, C++ has been at a disadvantage for a long time. Python has
+    <tt>virtualenv</tt>, <tt>pip</tt> ans <tt>poetry</tt>, rust has <tt>cargo</tt>
+    (with some limitations), java has <tt> maven</tt>. But C++ is lacking a
+    universally accepted solution. <a class="visible-link"
+    href="https://conan.io/"><tt>conan</tt></a> or <a class="visible-link"
+    href="https://github.com/microsoft/vcpkg"><tt>vcpkg</tt></a> or others have
+    been trying to fill that gap these last few years but none of them offers
+    the simplicity and universality of a solution like <tt>npm</tt>. It will
+    probably remain so for many years to come, even though the introduction of
+    <a class="visible-link"
+    href="https://en.cppreference.com/w/cpp/language/modules">modules</a> in
+    C++20 might save the day. Time will tell...
+  </p>
+</div>
+    </div>
+  </div>
+
+</body>

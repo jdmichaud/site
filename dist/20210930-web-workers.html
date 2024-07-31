@@ -1,0 +1,284 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <link rel="icon" type="image/png" href="/favicon.png">
+  <title>JD's tech website</title>
+  <link rel="stylesheet" type="text/css" href="/style.css"></style>
+  <style type="text/css">
+    p {
+      text-align: justify;
+    }
+
+    tt {
+      background-color: lightgrey;
+      font-size: 16px;
+    }
+
+    .visible-link {
+      color: blue;
+    }
+  </style>
+  <!-- highlight.js -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/10.0.3/styles/default.min.css">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/10.0.3/highlight.min.js"></script>
+  <script>
+    window.onload = () => {
+      hljs.initHighlighting();
+    };
+  </script>
+</head>
+<body>
+  <div class="site-container">
+    <div class="container">
+      <div class="header">
+        <h1><a href="/">JD's tech website</a></h1>
+        <hr>
+        <div class="header-link">
+          <a href="/about.html">about</a>
+          <a href="/contact.html">contact</a>
+        </div>
+      </div>
+    <div></div>
+<div>
+  <h3 class="title">What are Web Workers?</h3>
+  <p>
+    One of the particularities of Javascript in the browser is that its runtime
+    is an event loop where your code is always executed in the main UI thread.
+    This design allows to greatly simplify the front end code. You never need
+    to worry about synchronizing access to resources as those resources are only
+    accessed by one thread at the same time. Meanwhile, the event loop design
+    allows to smoothly manage asynchonicity and keep your UI responsive even in
+    the face of long running but low CPU tasks like fetching resources from a
+    remote machine.
+  </p>
+  <p>
+    However, this design does not address the issue posed by long running high
+    CPU tasks. As web applications become more complex, more tasks are offloaded
+    to the browser and among those might be CPU intensive processing tasks
+    related to image processing, encryption/decryption,
+    compression/decompression, inference, etc. Implemented in Javascript, these
+    tasks will be executed in the main thread blocking the UI, negatively
+    impacting the user experience.
+  </p>
+  <p>
+    In the C/C++ world, this problem would be solved through the use of threads.
+    By dividing the attention of your CPU (either by multi-tasking or
+    multi-threading) you will allow your long running tasks to execute without
+    blocking you UI thread. Of course, the experience might be impacted if your
+    CPU can't handle the load but this becomes a hardware issue not a software
+    issue. By upgrading you system, your experience will improve.
+  </p>
+  <p>
+    In the browser, there is a way to obtain a behavior similar to threads:
+    <a href="https://developer.mozilla.org/en-US/docs/Web/API/Web_Workers_API" class="visible-link">Web Workers.</a>
+    The description on the MDN page says it all:
+  </p>
+  <q><i>
+    Web Workers make it possible to run a script operation in a background
+    thread separate from the main execution thread of a web application.
+    The advantage of this is that laborious processing can be performed in a
+    separate thread, allowing the main (usually the UI) thread to run without
+    being blocked/slowed down.
+  </i></q>
+  <h3>An example</h3>
+  <p>
+    Here a simple example presenting how to use a web worker to execute a simple
+    function that multiplies a number.
+  <pre><code class="javascript">
+var myWorker = new Worker('worker.js');
+myWorker.onmessage = function(event) {
+  console.log('Event received from worker', event.data);
+}
+myWorker.postMessage(21);
+  </code></pre>
+  In a separate file called 'worker.js':
+  </p>
+  <pre><code class="javascript">
+onmessage = function(event) {
+  console.log('Event received from main script', event);
+  postMessage(event.data * 2);
+}
+  </code></pre>
+  <p>
+    There is a few things to unpack. First, you will notice the mode of
+    communication between the main thread and the worker is through message
+    passing. It might seem needlessly complex, why not work through
+    simple asynchronous function calls by the way of Promises? The problem with
+    promises is that you can resolve them only once. And
+    <a href="/blog/blog-entry.html?article=20200522-observables.html" class="visible-link">Observables</a>
+    are still not a thing in the browser so the way to allow for a worker to
+    provide multiple responses during the task execution is through that
+    messaging scheme.
+  </p>
+  <p>
+    Another important point is the fact that the worker code has to live in a
+    separate Javascript file. For people delivering encapsulated components, this
+    might be a show-stopper or at least a pesky requirements to satisfy. Why not
+    provide a function to be executed asynchronously. But worry not, there is a
+    workaround to this.
+  </p>
+  <p>
+    Finally, and this is not apparent here, the execution context of the worker
+    is slightly different from the execution context of the main thread.
+    For example the `window` object is not available as well as the DOM. Of
+    course, you are not executing in the UI thread so you can't change the UI.
+    Except from this, you will have access to most of the browser's API.
+  </p>
+
+  <h3>A better interface</h3>
+  <p>
+    As we have seen, the Web Worker interface, though powerful can be a little
+    awkward to use. Moreover, as any good gentle person these days, we fancy
+    ourselves to be Typescript developers. Type safety is our creed. So we will
+    try to address some of those points while reducing complexity and
+    improving type safety.
+  </p>
+  <h4>Please take my function</h4>
+  <p>
+    My initial reaction to Web Workers was "why do I need to download an
+    external script to use a Worker??". Indeed, in Javascript, functions are
+    first class citizens. There are used everywhere. Why not provide a function
+    to our worker? I don't pretend to know the rational of that design choice made
+    by the standardization bodies of the Web ; My guess is that it would prevent
+    developer to have the impression that the function can access closure from
+    the Web Worker which is of course impossible. Isolating the worker code
+    inside a separate script might make that clearer. Still, it's awkward...
+  </p>
+  <p>
+    There is a solution to this though. The Worker's constructor expects a URL.
+    In Javscript we can convert any function to a string using the toString method.
+    Then through the
+    <a href="https://developer.mozilla.org/en-US/docs/Web/API/URL/createObjectURL" class="visible-link">createObjectURL</a>
+    API we can convert any string to a URL. That's it:
+  </p>
+  <pre><code class="javascript">
+function createWorker(fun) {
+  const funSerialized = `
+    onmessage = async (msg) => {
+      const result = await (${fun.toString()})(...msg.data);
+      postMessage(result);
+    };
+  `
+  const blob = new Blob([funSerialized], { type: 'application/javascript' });
+  const worker = new Worker(URL.createObjectURL(blob));
+}
+
+const worker = createWorker((param) => param * 2);
+  </code></pre>
+  <p>
+    This way we can now use functions directly with workers, no need of an
+    external script. We just need to keep in mind that this function will be
+    serialized and deserialized and will not be executed in place so the usual
+    access to closure is not possible here. Note that we await the function so
+    that you can either provide a synchronous or an asynchronous function to the
+    worker factory. Awaiting on a synchronous function as no effect nor
+    performance impact.
+  </p>
+  <h4>Another Typescript miracle !</h4>
+  <p>
+    In order to get some structure we will move that function in a specialized
+    class which will be typed according to the type of the provided function to
+    ensure type safety all the way.
+  </p>
+  <pre><code class="typescript">
+export class ThreadBuilder&lt;OutputType, T extends any[]&gt; {
+  static create&lt;OutputType, T extends any[]&gt;(code: (...args: T) => OutputType)
+    : ThreadBuilder&lt;OutputType, T> {
+    return new ThreadBuilder&lt;OutputType, T>(ThreadBuilder.makeServer(code));
+  }
+
+  private static makeServer&lt;OutputType, T extends any[]&gt;(code: (...args: T) => OutputType): string {
+    return `
+      onmessage = async (msg) => {
+        const result = await (${code.toString()})(...msg.data);
+        postMessage(result);
+      };
+    `;
+  }
+
+  private constructor(private readonly server: string) {}
+
+  createThread(): Thread&lt;OutputType, T> {
+    const blob = new Blob([this.server], { type: 'application/javascript' });
+    const worker = new Worker(URL.createObjectURL(blob));
+    return Thread.create(worker);
+  }
+}
+  </code></pre>
+  <p>
+    Nothing fancy. We just moved the code into a class and added a bunch of
+    generics so the type checker has better clarity at what we are trying to do.
+    Now we can just:
+  </p>
+  <pre><code class="typescript">
+    const thread = ThreadBuilder.create((param) => param * 2).createThread();
+  </code></pre>
+  <p>
+    Note that we are not creating bare workers here. We are creating an instance
+    of the class called Thread that we will describe below. The Thread class is
+    just a wrapper around Worker so we can adjoin some types using generics.
+    This way, the type checker can keep track of what that worker expects as
+    parameters and what it will return.
+  </p>
+  <pre><code class="typescript">
+  export class Thread&lt;OutputType, T extends any[]&gt; {
+    static create&lt;OutputType, T extends any[]&gt;(worker: Worker): Thread&lt;OutputType, T> {
+      return new Thread&lt;OutputType, T>(worker);
+    }
+
+    private constructor(private readonly worker: Worker) {}
+
+    async run(...parameters: T): Promise&lt;OutputType> {
+      return new Promise((resolve, reject) => {
+        this.worker.onmessage = function (msg: MessageEvent) {
+          resolve(msg.data);
+        };
+        this.worker.onmessageerror = function (error: MessageEvent) {
+          reject(error);
+        };
+        this.worker.postMessage(parameters);
+      });
+    }
+  }
+  </code></pre>
+  <p>
+    Thread will provide some abstraction over worker and represent the worker
+    execution as a promise. It is important to not that we introduce a
+    limitation in our design. The aforementioned ability of workers to deliver
+    multiple messages as response to a call is now obstructed by the Promise
+    abstraction. But that's ok. Every abstraction is a trade-off and this one
+    seems acceptable. Should you need a particular worker to stream multiple
+    responses then you can always create workers manually.
+  </p>
+  <p>
+    Running the thread now is easy, just call the run method, provide your
+    parameter(s) and await for the answer:
+  </p>
+  <pre><code class="typescript">
+    const result = await ThreadBuilder.create((param) => param * 2).createThread().run(21);
+    console.log(result); // 42
+  </code></pre>
+  <p>
+    Trying to retrieve the result into a string or passing an object
+    instead of a number will generate a type error from your favorite typescript
+    compiler. This will ease troubleshooting and increase your code quality.
+  </p>
+  <h3>There's a npm package for that</h3>
+  <p>
+    You can find all this and more in this library:
+    <a href="https://www.npmjs.com/package/@jdmichaud/ts-workers" class="visible-link">https://www.npmjs.com/package/@jdmichaud/ts-workers</a>
+    Check out the Queue object which will allow you to define a worker pool and
+    run multiple tasks through that pool. Should you run into a problem, create
+    an issue
+    <a href="https://github.com/jdmichaud/ts-workers/issues" class="visible-link">here.</a>
+  </p>
+  <p>
+    Enjoy !
+  </p>
+
+</div>
+    </div>
+  </div>
+
+</body>

@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <link rel="icon" type="image/png" href="/favicon.png">
+  <title>JD's tech website</title>
+  <link rel="stylesheet" type="text/css" href="/style.css"></style>
+  <style type="text/css">
+    p {
+      text-align: justify;
+    }
+
+    tt {
+      background-color: lightgrey;
+      font-size: 16px;
+    }
+
+    .visible-link {
+      color: blue;
+    }
+  </style>
+  <!-- highlight.js -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/10.0.3/styles/default.min.css">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/10.0.3/highlight.min.js"></script>
+  <script>
+    window.onload = () => {
+      hljs.initHighlighting();
+    };
+  </script>
+</head>
+<body>
+  <div class="site-container">
+    <div class="container">
+      <div class="header">
+        <h1><a href="/">JD's tech website</a></h1>
+        <hr>
+        <div class="header-link">
+          <a href="/about.html">about</a>
+          <a href="/contact.html">contact</a>
+        </div>
+      </div>
+    <div></div>
+<div>
+  <h3 class="title">Gilbert Strang and Linear Algebra made easy</h3>
+  <p>
+    If you don't know what linear algebra is, then you must have had the same
+    kind of math teacher I had. Linear algebra is the part of math that deals
+    with matrices. They are extremely useful in many area of computer science:
+    computer graphics, simulation and machine learning. They're a basic tool
+    that one must master in order to understand what one is doing in those
+    fields.
+  </p>
+  <div style="display:flex; flex-direction: column">
+    <div style="display:flex; justify-content: center;"><img src="../assets/Mona_Lisa_eigenvector_grid.png" style="width: 30%;"></img></div>
+    <div style="display:flex; justify-content: center;"><p style="font-size: 12px">A shearing applied to La Gioconda.</p></div>
+  </div>
+  <p>
+    Yet, I noticed that it remains a poorly understood field of mathematics, even
+    by seasoned engineer, which is a shame. Indeed, math teachers tend to teach
+    that subject in a very dry way. They'll tend to focus on the resolution of
+    system of equations and spending a lot of time on definition and formal
+    proof, which end up confusing the listener. I guess it depends in which
+    country you went to school to, but I had to learn by heart how to solve a
+    limited set of typical problems that would then have to be solved again
+    without my textbook during the exam. That is really not the best way to
+    understand something. It's just a memory exercise.
+  </p>
+  <p>
+    Enter <a href="http://www-math.mit.edu/~gs/" class="visible-link">Gilbert
+    Strang</a>. I stumbled upon his website a long time ago and started watching
+    his LinAlg lectures. Gilbert Strang is a Professor of Mathematics at the
+    Massachusetts Institute of Technology (MIT). He's been teaching there for
+    decades and have a specialty in LinAlg. He honed a well rehearsed LinAgl
+    class for years and is one of the first teacher to have published his <a href="http://www-math.mit.edu/~gs/" class="visible-link">lectures online</a>
+    at the end of the 90s.
+  </p>
+  <p>
+    Prof. Strang's lectures are remarkable on many levels. First, he's not
+    focused on demonstration or definition, even though they are effectively
+    present in his lectures. It happens that they are not at the center of its
+    teaching but rather a consequence of your own understanding. Prof. Strang
+    will insist on the many interpretation of a fact, giving you the various
+    aspect of a mathematical truth. He will show you the dots and then help you
+    connect them. This is clearly visible in <a href="https://www.youtube.com/watch?v=J7DzL2_Na80" class="visible-link">the first video of the course</a>
+    which is entitled the "Geometry of Linear Algebra". Right into it, Prof.
+    Strang will give you the geometric interpretation of a matrix. What the rows
+    represent, what the columns represent. He's not jumping on the system of
+    equation bandwagon but only to tell you that's not what this is about. What
+    this is about is manipulating objects which, although conceptual, have a real
+    meaning in an every day engineer's life.
+  </p>
+  <div style="display:flex; justify-content: center;">
+    <iframe width="560" height="315" src="https://www.youtube.com/embed/J7DzL2_Na80?start=275" frameborder="0" allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+  </div>
+  <p>
+    The fundamental truth that you will quickly grasp, thanks to Prof. Strang
+    clear enunciation, is that matrices are a way to transform vectors. Be it
+    rotation, skewing and even translation in case of homogeneous matrices, what
+    you are doing when using a matrix is move things. Once you understand this
+    fundamental and clearly simple concept then everything makes sense. A matrix
+    is about changing perspective or, mathematically, changing your coordinate
+    system. A matrix inverse is about putting an object back where it was.
+    Finding the rank is understanding how you matrix preserve or transform the
+    spaces in which your objects live in. Computing an eigenvector is
+    extracting, from this seemingly formless bag of numbers, the axe upon which
+    the transformation revolves around. Even the somehow complex notion of
+    Singular Value Decomposition becomes clear and intuitive.
+  </p>
+  <p>
+    Prof. Strang strength relies on many factors but one important aspect is his
+    empathy. You can clearly see that he thinks with the mind of a student. Even
+    though the technique of lecture ex cathedra is not particularly innovative,
+    his diction, his posture, his flow of thinking are all guided toward the
+    goal of taking your hand and slowly but surely remove you from the darkness
+    of confusion to the warming light of understanding. Many times during the
+    course I caught myself smiling, even laughing sometimes at the discovery of
+    a seemingly simple truth which had eluded me all these years.
+  </p>
+  <p>
+    One important aspect of Prof. Strang's class is that it comes with its
+    <a href="http://math.mit.edu/~gs/linearalgebra/" class="visible-link">own textbook</a>.
+    The class matches the chapter and the book is definitely a necessary
+    companion to the lectures. It goes deeper on certain concept, clarifies some
+    points and provide exercises which, let's be blunt, are necessary if you
+    ever want to master and remember what you are learning.
+  </p>
+  <div style="display:flex; flex-direction: column">
+    <div style="display:flex; justify-content: center;"><img src="../assets/GS_Linear_Algebra.jpg" style="width: 30%;"></img></div>
+    <div style="display:flex; justify-content: center;"><p style="font-size: 12px">Introduction to Linear Algebra, Fifth Edition (Gilbert Strang) Fifth Edition</p></div>
+  </div>
+  <p>
+    Now spending time watching Prof. Strang's lectures while reading the book is
+    certainly a substantial investment of your time. But an investment which
+    will be well rewarded in the clearer understanding of one of the most
+    fundamental tool of engineering.
+  </p>
+</div>
+    </div>
+  </div>
+
+</body>

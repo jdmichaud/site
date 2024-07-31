@@ -1,0 +1,246 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <link rel="icon" type="image/png" href="/favicon.png">
+  <title>JD's tech website</title>
+  <link rel="stylesheet" type="text/css" href="/style.css"></style>
+  <style type="text/css">
+    p {
+      text-align: justify;
+    }
+
+    tt {
+      background-color: lightgrey;
+      font-size: 16px;
+    }
+
+    .visible-link {
+      color: blue;
+    }
+  </style>
+  <!-- highlight.js -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/10.0.3/styles/default.min.css">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/10.0.3/highlight.min.js"></script>
+  <script>
+    window.onload = () => {
+      hljs.initHighlighting();
+    };
+  </script>
+</head>
+<body>
+  <div class="site-container">
+    <div class="container">
+      <div class="header">
+        <h1><a href="/">JD's tech website</a></h1>
+        <hr>
+        <div class="header-link">
+          <a href="/about.html">about</a>
+          <a href="/contact.html">contact</a>
+        </div>
+      </div>
+    <div></div>
+<div>
+  <h2 class="title">Use DWARF to debug WASM in the browser (part 2)</h2>
+  <h3>Read line number data from the DWARF symbol</h3>
+  <p>
+    <a class="visible-link"
+    href=blog-entry.html?article=20220903-DWARF-overview.html>In the previous
+    articles</a> we have extracted the debug sections of the WASM binary and
+    started interpreting the DWARF data in them. We extracted the compilation
+    unit and the associated Debug Information Entry (DIE).
+  </p>
+  <p>
+    In this article, we will see how we can interpret the data present in the
+    <b>.debug_line</b> section. It is important to keep in mind that using as
+    little space as possible is one of the main design goal of DWARF. That is
+    why the way the association between the source location and the compiled
+    code is encoded the way it is in DWARF. In order, for your debugger, to know
+    where in the code the current program counter register points to, a
+    correspondence between the instruction address and the source location must
+    be encoded in the <b>.debug_line</b>. The data is not encoded using what we
+    might call a format. It is actually encoded as a program. We will create a
+    virtual machine composed of various register and read binary code which
+    represent instructions, each of those instruction acting on the state of the
+    virtual machine register. Occasionally, this VM will generate an entry in a
+    matrix that will match instruction code of the original compiled program to
+    the corresponding source location.
+  </p>
+  <h3>The line program virtual machine</h3>
+  <p>
+    The virtual machine is composed of the following "registers":
+  </p>
+    <ul>
+      <li><b>address</b>: The program counter value for a particular instruction in
+      the original program.</li>
+      <li><b>op_index</b>: This is related to VLIW architecture, not relevant in the
+      WASM context.</li>
+      <li><b>file</b>: An index in a filename array.</li>
+      <li><b>line</b>: The line in the source file.</li>
+      <li><b>column</b>: The column in the source file.</li>
+      <li><b>is_stmt</b>: A boolean indicating if the instruction can be used as a
+      breakpoint or not.</li>
+      <li><b>basic_block</b>: Indicating if the instruction is the first of a basic
+      block. A basic block being more or less a function.</li>
+      <li><b>end_sequence</b>: A sequence is a contiguous set of instruction. This
+      boolean indicate the instruction is the last of the sequence.</li>
+      <li><b>prologue_end</b>: A boolean indicating that the current instruction is
+      at the beginning of a function. A breakpoint here will stop right before
+      the actual code of the function runs.</li>
+      <li><b>epilogue_begin</b>: A boolean indicating the contrary. An instruction
+      executed after the function has finished and right before it returns.</li>
+      <li><b>isa</b>: Not important in the WASM context.</li>
+      <li><b>discriminator</b>: An index indicating the if of the block the
+      instruction belongs to.</li>
+    </ul>
+  <p>
+    They are described in details in <a class="visible-link"
+    href=https://dwarfstd.org/doc/DWARF4.pdf>DWARF Debugging Information Format
+    version 4 chapter 6.2.2</a>.
+    The whole purpose of the program will be to change the virtual machine state
+    and generate a correspondence matrix using those registers. Every once in a
+    while, the registers will be dumped in a stack and this will identify another
+    link between the instructions and the source program.
+  </p>
+  <h3>The line program instructions</h3>
+  <p>
+    This virtual machine will read its instruction from the <b>.debug_line</b>
+    section. The instruction set is pretty simple. I will not list them all here
+    as you can find them in Chapter 6.2.5 of the aforementioned document. The
+    instructions are of 3 different types:
+    <ul>
+      <li>1. The standard opcode: They will act on the register in various ways.
+      depending on the version of the DWARF standard, their number is pretty
+      limited. 12 for version 4. They can have operands.</li>
+      <li>2. The extended opcode: Not much different from the standard opcodes,
+      there's four of them in version 4.</li>
+      <li>3. The special opcode: Their only purpose is to advance the VM address
+      register by the value depending on their opcode and a pretty involved
+      formula described in chapter 6.2.5.1. Another cost saving measure.</li>
+    </ul>
+  </p>
+  <h4>The special opcodes</h4>
+  <p>
+    They are only represented by their opcode as an unsigned byte. They have no
+    operands. Each time a special opcode is read, the VM will create an entry
+    in the correspondence matrix. The opcode will also have some effect on the
+    VM state <a class="visible-link" href=https://dwarfstd.org/doc/DWARF4.pdf>see 6.2.5.1.</a>.
+  </p>
+  <h4>The standard opcodes</h4>
+  <p>
+    As we have seen, there are twelve of them. Their opcode is represented by
+    an unsigned byte. The opcode can be followed by zero, one or multiple
+    operands encoded in LEB128. One example of instruction is
+    <b>DW_LNS_advance_line</b> which opcode is 0x0C and takes one LEB128 operand
+    which must be added to the line register of the VM.
+  </p>
+  <h4>The extended opcode</h4>
+  <p>
+    The extended opcode have their first byte set to 0 and their opcode,
+    starting on the second byte is encoded in LEB128. There are 4 described in
+    the version 4 of the standard but due to their encoding they can be many
+    future extension without breaking backward compatibility.
+  </p>
+  <h3>The <b>.debug_line</b> section</h3>
+  <p>
+    Like the custom sections we have covered in the previous article, the
+    <b>.debug_line</b> section first starts with 0x00, the length of the
+    section, the length of the section name and finally the name. The next byte
+    will correspond to index 0x00 of the line program header. This is important
+    because each compilation unit has a field called DW_AT_stmt_list which is
+    one of the tags we read when we decoded the CU.
+  <pre>
+0x0000000b: DW_TAG_compile_unit
+            DW_AT_producer    ("zig 0.10.0")
+            DW_AT_language    (DW_LANG_C99)
+            DW_AT_name        ("main")
+            DW_AT_stmt_list   (0x00000000)  <----- here
+            DW_AT_comp_dir    (".")
+            DW_AT_GNU_pubnames        (true)
+            DW_AT_low_pc      (0x00000000)
+            DW_AT_ranges      (0x00000000
+               [0x00000003, 0x000000d5)
+               [0x000000d6, 0x000000de))
+  </pre>
+    This field will reference an offset in the .debug_line section indicating
+    the start of the line program corresponding to the CU. The offset starts
+    right after the section name.
+  </p>
+  <p>
+    In our example here, the statement list starts at 0x00. The first thing we
+    will read is the line program header. The header determine some parameters
+    and the initial state of the VM. The header is composed as follow:
+    <ul>
+      <li><b>unit_length</b> (4 bytes): The size of the program to come.</li>
+      <li><b>version</b> (2 bytes): The version which depends on the DWARF
+      version. Can probably be ignored.</li>
+      <li><b>header_length</b> (4 bytes): The size of this header up to the
+      first instruction.</li>
+      <li><b>minimum_instruction_length</b> (1 byte): Parameter which will be used by
+      the instructions to come.</li>
+      <li><b>maximum_operations_per_instruction</b> (1 bytes): Ditto.</li>
+      <li><b>default_is_stmt</b> (1 byte): The value to which initialize the
+      VM's <b>is_stmt</b> register.</li>
+      <li><b>line_base</b> (1 byte signed!)</li>
+      <li><b>line_range</b> (1 byte): Both line_base and line_range will be use to
+      calculate a state change in the VM depending on the opcode value.</li>
+      <li><b>opcode_base</b> (1 byte): The number assigned to the first special
+      opcode.</li>
+      <li><b>standard_opcode_lengths</b>: This is an array of LEB128, one for each
+      standard opcode which gives the number of operands for each opcode. The
+      first LEB128 is for opcode 1, the second opcode 2, etc. until
+      opcode_base - 1</li>
+      <li><b>include_directories</b>: A sequence of zero-terminated strings which
+      ends with two zeros. Will be used to reconstruct full file path.</li>
+      <li><b>file_names</b>: A sequence of records whose indices in the
+      sequence are used in the VM register "file". It is to be noted that the
+      sequence starts with index 1.</li>
+    </ul>
+    Once the line header is read, the instruction starts. The instructions
+    will be read opcode by opcode. Either the opcode found is zero and then
+    the extended opcode will be read in the following LEB128, either the value
+    is below the opcode_base value and is considered a standard opcode whose
+    description can be found in <a class="visible-link" href=https://dwarfstd.org/doc/DWARF4.pdf>6.2.5.2</a>,
+    either it is a special opcode.
+  </p>
+  <p>
+    Reading this code until the end of the unit (whose length is given in the
+    header) will ensure the VM state is changed appropriately and the
+    correspondence is generated. You will end up with a matrix that will look
+    like this:
+  </p>
+  <pre>
+Address            Line   Column File   ISA Discriminator Flags
+------------------ ------ ------ ------ --- ------------- -------------
+0x0000000000000003      3      0      5   0             0  is_stmt
+0x0000000000000025      4      3      5   0             0  is_stmt prologue_end
+0x0000000000000098      0      3      5   0             0
+0x0000000000000099      4      3      5   0             0
+0x00000000000000b6      0      3      5   0             0
+0x00000000000000b7      4      3      5   0             0
+0x00000000000000d5      4      3      5   0             0  end_sequence
+0x00000000000000d6    767      0      1   0             0  is_stmt
+0x00000000000000d7    788     17      1   0             0  is_stmt prologue_end
+0x00000000000000dc      0     17      1   0             0
+0x00000000000000de      0     17      1   0             0  end_sequence
+  </pre>
+  <p>
+    You can see here that in file 5 (which happens to be main.zig) line 4 and
+    column 3 corresponds to the instruction at address 0x0025. Pretty
+    straightforward.
+  </p>
+  <h3>Conclusion</h3>
+  <p>
+    This article did not go into all the gory details of the line number program
+    virtual machine instruction set but the DWARF standard does a pretty good
+    job at that. In the <a class="visible-link"
+    href=blog-entry.html?article=20220917-sourcemap-in-wasm.html>next
+    article</a>, we will finally see how we can use this information to generate
+    the inline sourcemap to be added to the WASM buffer and enable the browser's
+    debugger.
+  </p>
+</div>
+    </div>
+  </div>
+
+</body>

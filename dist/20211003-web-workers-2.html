@@ -1,0 +1,367 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <link rel="icon" type="image/png" href="/favicon.png">
+  <title>JD's tech website</title>
+  <link rel="stylesheet" type="text/css" href="/style.css"></style>
+  <style type="text/css">
+    p {
+      text-align: justify;
+    }
+
+    tt {
+      background-color: lightgrey;
+      font-size: 16px;
+    }
+
+    .visible-link {
+      color: blue;
+    }
+  </style>
+  <!-- highlight.js -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/10.0.3/styles/default.min.css">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/10.0.3/highlight.min.js"></script>
+  <script>
+    window.onload = () => {
+      hljs.initHighlighting();
+    };
+  </script>
+</head>
+<body>
+  <div class="site-container">
+    <div class="container">
+      <div class="header">
+        <h1><a href="/">JD's tech website</a></h1>
+        <hr>
+        <div class="header-link">
+          <a href="/about.html">about</a>
+          <a href="/contact.html">contact</a>
+        </div>
+      </div>
+    <div></div>
+<div>
+  <h3 class="title">The classical use case</h3>
+  <p>
+    <a href="/blog/blog-entry.html?article=20210930-web-workers.html" class="visible-link">We previously had a look at web workers</a>,
+    how they work and how to easily use them in a Typescript context. But we
+    haven't got to the point where we could actually see them in action in a
+    real use case.
+  </p>
+  <p>
+    Traditionally, web pages are only front ends to remote applications. You
+    might be interfacing with the browser but most of the heavy lifting is done
+    on the backend. Fetching and processing data is traditionally reserved to
+    the powerful servers. But as the web is evolving, we see more and more long
+    running web applications performing task that used to be devolved to heavy
+    clients.
+    <a href="https://www.photopea.com/" class="visible-link">Image processing</a>
+    and <a href="https://www.kapwing.com/studio/editor" class="visible-link">video editing</a>
+    are starting to be common tasks being done on the web. In these use cases,
+    being able to process canvas pixels as fast as possible is tantamount to a
+    acceptable user experience. Processing a canvas of generous dimension on the
+    UI thread used to be the only choice available to the web developer with the
+    consequence that you block the UI for the duration of that processing.
+  </p>
+  <p>
+    Let's do a back-of-the-envelop evaluation of that strategy. For a canvas of
+    1024x1024, it is easy to imagine that applying a simple filter like a sobel
+    or any kind of kernel might take several milliseconds, let's say 10. Your
+    user, interacting with your canvas, will expect the best kind of reactivity
+    with a 60 frames per second target framerate. This means that applying that
+    filter already takes 60% (10 / 16 * 100) of your CPU time for that frame.
+    And depending on the complexity of your UI, there might be a myriad of other
+    things to do each time a frame is updated.
+  </p>
+  <p>
+    This use case is typically the kind of situation where web workers will
+    shine. You will be able to divide you canvas in small pieces and process
+    them in parallel by web workers outside of your UI. This way, the processing
+    will be faster and your UI will remain responsive.
+  </p>
+  <h4>Passing data</h4>
+  <p>
+    But all this is dependent on an important condition. That you are able to
+    transfer data efficiently between your main UI thread and your workers.
+    Calling your worker is not equivalent to calling a function. The barrier
+    between your main thread and your workers are equivalent of what you will
+    find between two processes in your OS. Between them, they will not share
+    memory and data has to copied over in order to be used. This copy is done
+    through
+    <a href="https://developer.mozilla.org/en-US/docs/Web/API/Web_Workers_API/Structured_clone_algorithm" class="visible-link">structured cloning</a>,
+    which is a fancy way of saying "copy".
+  </p>
+  <div style="display:flex; flex-direction: column">
+    <div style="display:flex; justify-content: center;"><img src="../assets/web-workers-copy-data.svg" style="width: 50%;"></img></div>
+    <div style="display:flex; justify-content: center;"><p style="font-size: 12px"><p>Data is copied from the main thread to the worker.</p></div>
+  </div>
+  <p>
+    For example, if you were to process your canvas in multiple web workers, you
+    would need to retrieve the pixels and send them over to the workers, which
+    would imply copying and then retrieve the result which again result in a
+    copy. To take the example of our 1024x1024 canvas from earlier, this means
+    transferring 1024 x 1024 x 4 (4 bytes per pixel for RGBA) = 4 MB, twice !
+  </p>
+  <p>
+    This will take some time. And we are talking about a medium size image here.
+    What if you where to deal with 4K images? 32 MB, twice. So there must be
+    a way to do better. And indeed there is. If you look at the
+    <a href="https://developer.mozilla.org/en-US/docs/Web/API/Window/postMessage" class="visible-link">postMessage()</a>
+    mdn page, you will see an additional parameter called "transfer". This will
+    allow you to specify the object you will want to "move" to the destination
+    instead of copying them. The move is, of course, way faster.
+  </p>
+  <div style="display:flex; flex-direction: column">
+    <div style="display:flex; justify-content: center;"><img src="../assets/web-workers-transfer-data.svg" style="width: 50%;"></img></div>
+    <div style="display:flex; justify-content: center;"><p style="font-size: 12px"><p>Data is transfered from the main thread to the worker.</p></div>
+  </div>
+  <p>
+    Internally, the browser will be able to, basically, copy only the pointer to
+    the data structure you want to transfer. This only works for a limited set
+    of types which are called
+    <a href="https://developer.mozilla.org/en-US/docs/Web/API/Transferable" class="visible-link">Transferable Objects</a>.
+    As a result of the transfer though, you loose ownership of the data. If you
+    pass the ImageData object of the canvas, you will not be able to access
+    the pixel again, unless you call getImageData again. That could be a problem
+    if you want to shared those pixels to multiple workers. Once you transfer
+    the pixels to the first worker, they are not yours anymore to transfer to a
+    second workers.
+  </p>
+  <h4>SharedArrayBuffer</h4>
+  <p>
+    The fastest solution is shared memory. Earlier I said that, like
+    OSprocesses, JS threads in the browser do not share memory. Well, it's kinda
+    not true. Like OS processes, you can shared memory through a use of a
+    special device. On the browser, it will be
+    <a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/SharedArrayBuffer" class="visible-link">SharedArrayBuffers</a>.
+    ArrayBuffers are the "char *" of the browsers. An object owning data which
+    can then be wrapped by TypedArrays (Int8Array, Uint32Array, Float32Array, etc).
+    These arrays are used for everything and in particular, for canvas pixels.
+    SharedArrayBuffer are exactly like ArrayBuffer except, when being posted to
+    a worker, they are neither copied nor transfered. In fact, the actual data
+    is detached from the object itself so they act pretty much like pointers.
+  </p>
+  <div style="display:flex; flex-direction: column">
+    <div style="display:flex; justify-content: center;"><img src="../assets/web-workers-shared-data.svg" style="width: 50%;"></img></div>
+    <div style="display:flex; justify-content: center;"><p style="font-size: 12px"><p>Data is shared between the main thread and the worker.</p></div>
+  </div>
+  <p>
+    SharedArrayBuffers have a problem though. They have been disabled in
+    browsers at the beginning of 2018 because of the
+    <a href="https://blog.mozilla.org/security/2018/01/03/mitigations-landing-new-class-timing-attack/" class="visible-link">spectre/meltdown vulnerabilities</a>
+    discovered in modern CPUs. They were found vulnerable and could be used to
+    steal your data. There were enabled again in 2020 albeit in
+    particular context described <a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/SharedArrayBuffer#security_requirements" class="visible-link">here</a>.
+    It is a little bit involved and requires some constraint on your page but it
+    is still worth it when taking into account the performance improvement they
+    bring. In order for SharedArrayBuffer to be available you need:
+  </p>
+    <ul>
+      <li>
+        To be in a <a href="https://developer.mozilla.org/en-US/docs/Web/Security/Secure_Contexts" class="visible-link">secured context</a>,
+        meaning https or a page loaded from a localhost (for development
+        purposes).
+      </li>
+      <li>
+        To have those two following headers set this way:
+        <ul>
+          <li>Cross-Origin-Opener-Policy: same-origin</li>
+          <li>Cross-Origin-Embedder-Policy: require-corp</li>
+        </ul>
+      </li>
+    </ul>
+  <p>
+    You can check, within the page, that everything is in order by using the
+    global "window.crossOriginIsolated". If true, then SharedArrayBuffer are
+    available on the page. If you want to get quickly setup, you can use
+    <a href="https://gist.github.com/jdmichaud/903b7c70476f7a41300a1d46415ec264#file-simplehttpserverwithcors3-py" class="visible-link">this slight modification</a>
+    of the classic Python SimpleHttpServer. Start with:
+  </p>
+  <pre><code class="bash">
+python3 SimpleHTTPServerWithCORS3.py
+  </code></pre>
+
+  <h3>Case study</h3>
+  <p>
+    In order to demonstrate the usage of SharedArrayBuffer, we will write a
+    simple and dumb web app which will increment, as fast as possible, the
+    values of a canvas's pixel array. The canvas will display the 255 shades of
+    gray and back to black. In order to make this fun, we'll make the canvas
+    4096x4096, that is 64MB worth of memory access.
+  </p>
+  <p>
+    I will be using the
+    <a href="/blog/blog-entry.html?article=20210930-web-workers.html" class="visible-link">little typescript library</a>
+    that I wrote for the previous article for easy manipulation of the web
+    workers. First create a simple page in index.html:
+  </p>
+  <pre><code class="bash">
+&lt;!DOCTYPE html&gt;
+&lt;html&gt;
+&lt;head&gt;
+  &lt;meta charset="utf-8"&gt;
+  &lt;link rel="shortcut icon" href="#" /&gt;
+  &lt;title&gt;ts-workers&lt;/title&gt;
+  &lt;script type="text/javascript" src="main.js"&gt;&lt;/script&gt;
+&lt;/head&gt;
+&lt;body&gt;
+  &lt;div&gt;
+    &lt;button id="stopbtn"&gt;Stop&lt;/button&gt;&lt;br&gt;
+    &lt;canvas id="viewport" width=4096 height=4096&gt;&lt;/canvas&gt;
+  &lt;/div&gt;
+&lt;/body&gt;
+&lt;/html&gt;
+  </code></pre>
+  <p>
+    Then in main.ts:
+  </p>
+  <pre><code class="typescript">
+ 1  import { ThreadBuilder } from '../../src';
+ 2
+ 3  async function main(): Promise<void> {
+ 4    let running = true;
+ 5    // The button to stop the while loop
+ 6    const stopbtn = document.getElementById('stopbtn');
+ 7    stopbtn!.addEventListener('click', () => running = false);
+ 8    // Create the canvas and retrieve the context
+ 9    const canvas: HTMLCanvasElement = document.getElementById('viewport') as HTMLCanvasElement;
+10    const ctx = canvas.getContext('2d');
+11    if (ctx == null) throw new Error('cannot get context');
+12    // Create the shared array buffer, retrieve the pixels and set the pixels in the SAB.
+13    const sab = new SharedArrayBuffer(canvas.width * canvas.height * 4);
+14    const arrayOut = new Uint32Array(sab);
+15    const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+16    const arrayIn = new Uint32Array(imageData.data.buffer);
+17    arrayOut.set(arrayIn); // memcpy
+18    // Create the workers and their parameters.
+19    const queue = ThreadBuilder
+20      .create((data, start, length) => {
+21        const R = (data[start] & 0x000000FF) + 1;
+22        const G = R << 8;
+23        const B = R << 16;
+24        for (let i = start; i < start + length; ++i) {
+25          data[i] = 0xFF000000 | B | G | R;
+26        }
+27      })
+28      .createThreads(navigator.hardwareConcurrency)
+29      .queue();
+30    // The number of tasks is not necessarily the same as the number of workers.
+31    const nbJobs = navigator.hardwareConcurrency;
+32    console.log(`using ${nbJobs} jobs`);
+33    const length = (canvas.width * canvas.height) / nbJobs | 0;
+34    const params = Array.from(Array(nbJobs))
+35      .map((_, index) => [arrayOut, index * length,
+36        (index === nbJobs - 1) ? arrayOut.length - (index * length) : length]);
+37
+38    const timings = [] as any[];
+39
+40    const interval = setInterval(() => {
+41      const nbTimings = timings.length;
+42      const sums = timings.reduce((acc, { processingTime, drawTime, totalTime }) => {
+43        acc[0] += processingTime;
+44        acc[1] += drawTime;
+45        acc[2] += totalTime;
+46        return acc;
+47      }, [0, 0, 0]);
+48      console.log(`processingTime: ${sums[0] / nbTimings}, drawTime: ${sums[1] / nbTimings}, totalTime: ${sums[2] / nbTimings}`);
+49    }, 1000);
+50
+51    while (running) {
+52      const start = Date.now();
+53      // Run the tasks and wait for them to finish.
+54      const promises = queue.run(params as any);
+55      await Promise.all(promises);
+56
+57      const putImage = Date.now();
+58      const processingTime = putImage - start;
+59      // Set the result into the already retrieved ImageData and put the pixels
+60      // in the canvas.
+61      arrayIn.set(arrayOut);
+62      ctx.putImageData(imageData, 0, 0);
+63
+64      const drawTime = Date.now() - putImage;
+65
+66      const totalTime = Date.now() - start;
+67      if (timings.length > 1000) {
+68        timings.shift();
+69      }
+70      timings.push({ processingTime, drawTime, totalTime });
+71    }
+72
+73    clearInterval(interval);
+74  }
+75
+76  window.onload = main;
+  </code></pre>
+  <p>
+    The code is basically structured into two parts. First from line 1 to line
+    51 is the preparatory code, executed once, where the SharedArrayBuffer is
+    created and then wrapped in a TypedArray of unsigned int of 32 bits called
+    arrayOut. We retrieve the canvas pixels and copy then into the shared array.
+  </p>
+  <p>
+    Then there is the boiler plate code to create and initialize the workers. As
+    you can see, the function that the worker is going to accomplish is pretty
+    basic and useless. Go through its assigned portion of the shared array and
+    increment the pixel values (keeping the alpha channel to 255). Again, this is
+    pretty useless but it serves well as an ersatz of what a real processing
+    would do. Note line 25 how we set the value of the 4 channels in one write
+    instructions. This will significantly speed up the process.
+  </p>
+  <p>
+    Note that line 31, we distinguish between the number of workers and the
+    number of tasks. In our case, there is not reason to believe that it would
+    be beneficial to have those two numbers different but conceptually, they
+    are, so we'll keep them separate for experimentation purpose. Line 33 might
+    appear cryptic, but what we are doing is not rocket science. We are creating
+    an array of parameters to our workers. Each invocation to a worker will
+    require array where to write, the starting point and the number of pixels to
+    change. These 3 numbers are packed in an array and multiple invocation means
+    multiple parameters arrays. It will look like this:
+  </p>
+  <pre><code class="typescript">
+    [[arrayOut, 0, 100], [arrayOut, 100, 100], [arrayOut, 200, 100], ...]
+  </code></pre>
+  <p>
+    Once the boiler plate is in place, the while loop will then loop until we
+    press the stop button. At line 54 we execute the queue (which will increment
+    by one all pixels), copy the result to the ImageData (line 61) and paint
+    that ImageData onto the canvas (line 62).
+  </p>
+  <h4>Phoronix me</h4>
+  <p>
+    Looking at the result, you will notice that copying the pixels back to
+    ImageData and putting the data into the canvas is actually pretty costly. On
+    Firefox or Chrome, it will take ~20ms on my machine. So you can forget about
+    those mythical 60fps framerate but let's not forget we are dealing with more
+    than 16 millions pixels here.
+  </p>
+  <p>
+    On my machine, set to one tasks (nbJobs = 1, so no parallel processing) the
+    actual processing of the pixels will take ~30ms (always let the page run a
+    little so that the JIT compilation of the JS VM kicks in). Total time will
+    be ~52ms, so 1000/52 = ~20fps. Not great. But once nbJobs is set to the number
+    of threads on my machine (12) processing time is reduced to ~6.5ms with a
+    total time of ~25ms per iteration leading to a whopping ~41fps (again
+    remember the size of the canvas). So you just made the difference between a
+    not so great framerate to a pretty good one.
+  </p>
+  <p>
+    Note that, unsurprisingly, increasing the number of jobs to more than the
+    number of threads has no effect.
+  </p>
+  <h3>Web workers and beyond</h3>
+  <p>
+    Looking back at this exercise, it is important to note that, when we talk
+    about performances, we should always experiment. There are many ins and
+    outs and the final arbiter is the user experience. Always monitor your
+    results and whatever faith you have in your implementation, the user
+    experience should drive your technical choice. Web workers might be the
+    solution to your performance problems or not. Maybe WebGL is. But that's a
+    story for another time ;).
+  </p>
+</div>
+    </div>
+  </div>
+
+</body>
